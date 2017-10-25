@@ -46,7 +46,9 @@ class Config(configparser.ConfigParser):
 
             self.read(dataset)
 
-    def get(self, section, option, raw=None, vars=None, default=None, type=str):
+    def get(self, section, option, raw=None, vars=None, default=None, type=str, fallback=None):
+        if default is None:
+            default = fallback
         try:
             return type(configparser.ConfigParser.get(self, section, option, raw=raw, vars=vars))
 

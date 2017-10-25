@@ -251,6 +251,9 @@ class Context(IDMEF, Timer):
         version = self.__dict__.get("_version", None)
         return self.FORMAT_VERSION == version
 
+    def resetCount(self):
+        self._update_count = 0
+
     def update(self, options={}, idmef=None, timer_rst=True):
         self._update_count += 1
 
@@ -362,7 +365,7 @@ def load(profile):
 
         try:
             _CONTEXT_TABLE.update(ContextUnpickler(fd).load())
-        except EOFError:
+        except:
             return
 
         logger.debug("[load]: %d context loaded", len(_CONTEXT_TABLE))

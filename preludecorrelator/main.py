@@ -39,7 +39,7 @@ def _init_profile_dir(profile):
     filename = require.get_data_filename("context.dat", profile=profile)
 
     try:
-        os.makedirs(os.path.dirname(filename), mode=0700)
+        os.makedirs(os.path.dirname(filename), mode=0o700)
     except OSError as e:
         if e.errno != errno.EEXIST:
             raise
@@ -169,10 +169,11 @@ class PreludeClient(object):
         logger.info("%d events received, %d correlationAlerts generated.", self._events_processed, self._alert_generated)
 
     def correlationAlert(self, idmef):
-        self._alert_generated = self._alert_generated + 1
+        self._alert_generated = self._alert_generated + 2
 
         if not self._dry_run:
             self.client.sendIDMEF(idmef)
+            self._handle_event(idmef)
 
         if self._print_output:
             self._print_output.write(str(idmef))

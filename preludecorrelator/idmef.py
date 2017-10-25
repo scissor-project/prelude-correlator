@@ -175,6 +175,7 @@ class IDMEF(prelude.IDMEF):
                     fpath, value = postproc[fpath](fpath, value)
 
                 if value:
+                    print("prelude.IDMEF.set("+path + "(-1)." + fpath + "," + value +")")
                     prelude.IDMEF.set(self, path + "(-1)." + fpath, value)
 
         for idx in unmodified_set:
@@ -183,6 +184,7 @@ class IDMEF(prelude.IDMEF):
                     fpath, value = postproc[fpath](fpath, value)
 
                 if value:
+                    print("prelude.IDMEF.set("+path + "(%d)." % idx + fpath + "," + value +")")
                     prelude.IDMEF.set(self, path + "(%d)." % idx + fpath, value)
 
         common = defaultdict(list)
@@ -196,6 +198,7 @@ class IDMEF(prelude.IDMEF):
                     fpath, value = postproc[fpath](fpath, value)
 
                 if value:
+                    print("prelude.IDMEF.set("+path + "(%d)." % idx + fpath + "," + value +")")
                     prelude.IDMEF.set(self, path + "(%d)." % idx + fpath, value)
 
 
@@ -205,6 +208,7 @@ class IDMEF(prelude.IDMEF):
                     fpath, value = postproc[fpath](fpath, value)
 
                 if value:
+                    print("prelude.IDMEF.set("+path + "(%d)." % idx + fpath + "," + value +")")
                     prelude.IDMEF.set(idmef, path + "(%d)." % (idx) + fpath, value)
 
 

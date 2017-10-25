@@ -64,6 +64,7 @@ class PluginManager(object):
 
         self._conflict = {}
         self._force_enable = {}
+        self._active_plugins = []
 
         plugin_entries =  [ (e.name, e, self._load_entrypoint) for e in pkg_resources.iter_entry_points(entrypoint if entrypoint else self._default_entrypoint)]
         if entrypoint is None:
@@ -85,7 +86,7 @@ class PluginManager(object):
                 continue
 
             plugin_class = fct(e)
-            
+
             if plugin_class is None:
                 continue
 
@@ -160,19 +161,19 @@ class PluginManager(object):
             logger.exception("[%s]: loading error: %s", entrypoint.name, e)
             return None
 
-    def _load_userpoint(self, (name, path)):
+    def _load_userpoint(self, elm):
         try:
-            mod_info = imp.find_module(name, [path])
+            mod_info = imp.find_module(elm[0], [elm[1]])
 
         except ImportError:
-            logger.warning( 'Invalid plugin "%s" in "%s"' % (name, path) )
+            logger.warning( 'Invalid plugin "%s" in "%s"' % (elm[0], elm[1]) )
             return None
 
         try:
-            return getattr(imp.load_module( self._default_entrypoint + '.' + name , *mod_info), name)
+            return getattr(imp.load_module( self._default_entrypoint + '.' + elm[0] , *mod_info), elm[0])
 
-        except Exception, e:
-            logger.warning( "Unable to load %(file)s: %(error)s" % {'file': name,'error': str(e),})
+        except Exception as e:
+            logger.warning( "Unable to load %(file)s: %(error)s" % {'file': elm[0],'error': str(e),})
             return None
 
     def getPluginCount(self):
@@ -201,11 +202,39 @@ class PluginManager(object):
             except Exception:
                 logger.exception("[%s]: exception occurred while signaling", plugin._getName())
 
+    def getActivePlugins():
+     return self._active_plugins
+
+    def addActiveIDMEF(self, idmef_to_add):
+     if len(self._active_plugins) == 0:
+      return
+     p_to_add = self._active_plugins[-1]
+     p_to_add.append(idmef_to_add)
+     self._active_plugins[-1] = p_to_add
+
+    def print_active_plugins(self):
+     for p in self._active_plugins:
+      print(p[0])
+
     def run(self, idmef):
         for plugin in self.getPluginsInstancesList():
             try:
-                plugin.run(idmef)
-
+                if len(self._active_plugins) == 0:
+                 print("adding "+ plugin._getName())
+                 self._active_plugins.append(plugin._getName())
+                 print(self._active_plugins)
+                 plugin.run(idmef)
+                 print("removing "+ plugin._getName())
+                 self._active_plugins.pop()
+                 print(self._active_plugins)
+                else:
+                 if plugin._getName() != self._active_plugins[-1]:
+                  self._active_plugins.append([plugin._getName()])
+                  print(self._active_plugins)
+                  plugin.run(idmef)
+                  print("removing "+ plugin._getName())
+                  self._active_plugins.pop()
+                  print(self._active_plugins)
             except error.UserError as e:
                 logger.error("[%s]: error running plugin : %s", plugin._getName(), e)
 

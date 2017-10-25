@@ -2,7 +2,7 @@ include AUTHORS
 include COPYING
 include HACKING.README
 include NEWS
-include README
+include README.md
 include ez_setup.py
 include prelude-correlator.conf
 graft preludecorrelator
