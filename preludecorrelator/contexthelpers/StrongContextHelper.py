@@ -22,8 +22,9 @@ class StrongContextHelper(Context):
         return super(StrongContextHelper, self).__init__(name, options, overwrite=False, update=False, idmef=None)
 
     def _addTimeStamp(self, idmef):
-        print(dir(idmef))
-        self._timestamps.append([time.time(),idmef])
+        tmp_analyzer = AnalyzerContents()
+        tmp_analyzer.saveAnalyzerContents(idmef)
+        self._timestamps.append([time.time(),idmef, tmp_analyzer])
 
     def checkCorrelationAlert(self):
             now = time.time()
@@ -38,11 +39,12 @@ class StrongContextHelper(Context):
                  if counter >= self.getOptions()["threshold"]:
                      print("I am {} : threshold reached".format(self._name))
                      for c in range(t,t+counter):
+                         self._timestamps[t][2].restoreAnalyzerContents(self._timestamps[t][1])
                          self.update(options=self.getOptions(), idmef=self._timestamps[t][1])
                      self.destroy()
                      return True
                 else:
                   print("I am {} : del timestamps[{}]".format(self._name, t))
-                  del self._timestamps[t]
+                  self._timestamps.pop(t)
 
             return False
