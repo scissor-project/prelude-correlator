@@ -234,3 +234,29 @@ class IDMEF(prelude.IDMEF):
 def set_prelude_client(client):
     global prelude_client
     prelude_client = client
+
+class AnalyzerContents(object):
+
+    def __init__(self, attributes=None):
+        self.analyzers = IDMEF()
+        if attributes is None:
+            self.attributes = ["name","manufacturer","model","version","class","ostype","osversion","node.category","node.name","process.name","process.pid","process.path"]
+
+    def copyAnalyzers(self, source, dest):
+        list_attr = source.get("alert.analyzer(*)")
+        len_list_attr = len(list_attr)
+        for a in range(len_list_attr):
+            analyzer_num = "alert.analyzer({})".format(a)
+            dest.set("{}.analyzerid".format(analyzer_num),source.get("{}.analyzerid".format(analyzer_num)))
+
+            for att in self.attributes:
+                to_set = list_attr[a].get(att)
+                if to_set is not None:
+                    dest.set("{}.{}".format(analyzer_num,att), to_set)
+
+    def saveAnalyzerContents(self, idmef):
+        self.copyAnalyzers(idmef, self.analyzers)
+
+
+    def restoreAnalyzerContents(self, idmef):
+        self.copyAnalyzers(self.analyzers, idmef)

@@ -22,6 +22,7 @@ import os
 import imp
 
 from preludecorrelator import log, error, require, plugins
+from preludecorrelator.idmef import AnalyzerContents
 
 logger = log.getLogger(__name__)
 
@@ -223,7 +224,10 @@ class PluginManager(object):
                  print("adding "+ plugin._getName())
                  self._active_plugins.append(plugin._getName())
                  print(self._active_plugins)
+                 tmp_analyzer = AnalyzerContents()
+                 tmp_analyzer.saveAnalyzerContents(idmef)
                  plugin.run(idmef)
+                 tmp_analyzer.restoreAnalyzerContents(idmef)
                  print("removing "+ plugin._getName())
                  self._active_plugins.pop()
                  print(self._active_plugins)
@@ -231,7 +235,10 @@ class PluginManager(object):
                  if plugin._getName() != self._active_plugins[-1]:
                   self._active_plugins.append([plugin._getName()])
                   print(self._active_plugins)
+                  tmp_analyzer = AnalyzerContents()
+                  tmp_analyzer.saveAnalyzerContents(idmef)
                   plugin.run(idmef)
+                  tmp_analyzer.restoreAnalyzerContents(idmef)
                   print("removing "+ plugin._getName())
                   self._active_plugins.pop()
                   print(self._active_plugins)

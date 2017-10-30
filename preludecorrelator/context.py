@@ -308,6 +308,9 @@ class Context(IDMEF, Timer):
         if not _CONTEXT_TABLE[self._name]:
             _CONTEXT_TABLE.pop(self._name)
 
+    def checkCorrelationAlert():
+        pass
+
 def getName(arg):
     def escape(s):
         return s.replace("_", "\\_")
