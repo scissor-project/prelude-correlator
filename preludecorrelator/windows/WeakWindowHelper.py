@@ -9,6 +9,7 @@ class WeakWindowHelper(WindowHelper):
         super(WeakWindowHelper, self).__init__(name)
         #self._origTime = time.time()
 
+
     def isEmpty(self):
         return ctx_search(self._name) is None
 
@@ -33,6 +34,7 @@ class WeakWindowHelper(WindowHelper):
 
     def addIdmef(self, idmef):
         self._ctx.update(options=self._ctx.getOptions(), idmef=idmef, timer_rst=False)
+
 
 
     def _countAlertReceived(self):

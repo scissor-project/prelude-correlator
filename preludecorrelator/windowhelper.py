@@ -21,6 +21,7 @@ class WindowHelper(object):
     def setInitialAttrs(self, initial_attrs):
         self._initialAttrs = initial_attrs
 
+
     def getCtx(self):
         return self._ctx
 
@@ -72,19 +73,37 @@ class WindowHolder(object):
 
     '''
     def bindWindowHelper(self, class_name, ctx_name):
+=======
+    def bindCtxToNewWindow(self, class_name, context_id, options, initial_attrs):
+>>>>>>> 6fc3edc... Changed init method to bindContextToNewWindow
         ctx = ctx_search(ctx_name)
         if ctx is None:
-            return None
+            ctx = Context(context_id, options, update = False)
+            for key, value in initial_attrs.iteritems():
+                ctx.set(key, value)
+        return class_name(ctx, context_id, options, initial_attrs)
+
+    def getWindowHelper(self, ctx_name):
+        #ctx = ctx_search(ctx_name)
+        #if ctx is None:
+        #    return None
         for w in self._windowHelpers:
             if w.getName() == getCtxName(ctx_name):
-                w.setCtx(ctx)
+                res = ctx_search(ctx_name)
+                if res is None:
+                    res = Context(ctx_name, w.getOptions(), update = False)
+                    for key, value in w.getInitialAttrs().iteritems():
+                        res.set(key, value)
+                w.setCtx(res)
                 #if w.getCtx() is None:
                 #    w.rst()
                 return w
+<<<<<<< HEAD
         new_inst = class_name(ctx, ctx_name)
         self.addWindowHelper(new_inst)
         return new_inst
     '''
+
 
     def getWindowHelpers(self):
         return self._windowHelpers()

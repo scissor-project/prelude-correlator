@@ -35,6 +35,7 @@ class AdvancedLevelCorrelator(Plugin):
 
             window.bindContext(options, initial_attrs)
 
+
         window.addIdmef(idmef)
 
         #if ctx.getWindowHelper().checkCorrelationWindow():

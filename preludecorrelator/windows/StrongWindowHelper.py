@@ -7,6 +7,7 @@ from ..context import search as ctx_search
 
 class StrongWindowHelper(WindowHelper):
 
+
     def __init__(self, name):
         super(StrongWindowHelper, self).__init__(name)
         self._timestamps = []
