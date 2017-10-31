@@ -35,6 +35,7 @@ class WeakWindowHelper(WindowHelper):
     def addIdmef(self, idmef):
         self._ctx.update(options=self._ctx.getOptions(), idmef=idmef, timer_rst=False)
 
+
     def _countAlertReceived(self):
      alert_received = self._ctx.get("alert.correlation_alert.alertident(*).analyzerid")
      if alert_received is None:
