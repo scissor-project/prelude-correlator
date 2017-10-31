@@ -18,15 +18,20 @@ class EntryLevelCorrelator(Plugin):
 
         window = self.getWindowHelper(WeakWindowHelper, context_id)
         if window.isEmpty():
+
+
          options = { "expire": 1, "threshold": 5 ,"alert_on_expire": False }
          initial_attrs = {"alert.correlation_alert.name": "Layer {} Correlation".format(LEVEL),
          "alert.classification.text": "MyFirstEntryLevelScan{}".format(NUMBER),
          "alert.assessment.impact.severity", "high"}
+
          #Create a context that:
-         #- expires after 5 seconds of inactivity
+         #- expires after 1 seconds of inactivity
          #- generates a correlation alert after 5 msg received
          #- checks for the threshold in a window of 1 second, if the window expires the correlation period restarts
+
          window.bindContext(options, initial_attrs)
+
 
         window.addIdmef(idmef)
 

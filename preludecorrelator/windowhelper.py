@@ -1,5 +1,6 @@
 from context import search as ctx_search
 from context import getName as getCtxName
+from context import Context
 
 class WindowHelper(object):
 
@@ -73,15 +74,12 @@ class WindowHolder(object):
 
     '''
     def bindWindowHelper(self, class_name, ctx_name):
-=======
-    def bindCtxToNewWindow(self, class_name, context_id, options, initial_attrs):
->>>>>>> 6fc3edc... Changed init method to bindContextToNewWindow
-        ctx = ctx_search(ctx_name)
+        ctx = ctx_search(context_id)
         if ctx is None:
             ctx = Context(context_id, options, update = False)
             for key, value in initial_attrs.iteritems():
                 ctx.set(key, value)
-        return class_name(ctx, context_id, options, initial_attrs)
+        return class_name(context_id, ctx,initial_attrs)
 
     def getWindowHelper(self, ctx_name):
         #ctx = ctx_search(ctx_name)
@@ -98,7 +96,6 @@ class WindowHolder(object):
                 #if w.getCtx() is None:
                 #    w.rst()
                 return w
-<<<<<<< HEAD
         new_inst = class_name(ctx, ctx_name)
         self.addWindowHelper(new_inst)
         return new_inst
