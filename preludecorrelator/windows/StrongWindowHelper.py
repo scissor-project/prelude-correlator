@@ -23,10 +23,10 @@ class StrongWindowHelper(WindowHelper):
         self._ctx = None
 
     def getIdmefField(self, idmef_field):
-        return self.initialAttrs[idmef_field]
+        return self._initialAttrs[idmef_field]
 
     def setIdmefField(self, idmef_field, value):
-        self.initialAttrs[idmef_field] = value
+        self._initialAttrs[idmef_field] = value
 
     def rst(self):
         self._timestamps = []

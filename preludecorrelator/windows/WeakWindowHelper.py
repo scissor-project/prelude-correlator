@@ -15,10 +15,15 @@ class WeakWindowHelper(WindowHelper):
 
     def bindContext(self, options, initial_attrs):
         res = ctx_search(self._name)
-        if res is not None:
-        self._ctx = Context(self._name, options, update=False)
+        if res is None:
+         self._ctx = Context(self._name, options, update=False)
+        else:
+         self._ctx = res
         self._options = options
         self.initialAttrs = initial_attrs
+
+        for key,value in self.initialAttrs.iteritems():
+            self._ctx.set(key,value)
 
     def unbindContext(self):
         self._ctx = None
@@ -42,11 +47,11 @@ class WeakWindowHelper(WindowHelper):
          alert_received = 0
      else:
          alert_received = len(alert_received)
+     return alert_received
 
     def checkCorrelationWindow(self):
 
          alert_received = self._countAlertReceived()
-
 
          if alert_received >= self._ctx.getOptions()["threshold"]:
              return True

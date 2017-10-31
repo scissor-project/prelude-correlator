@@ -6,8 +6,8 @@ from preludecorrelator.windows.StrongWindowHelper import StrongWindowHelper
 
 LEVEL = 2
 NUMBER = 0
-print("{}, Layer {} Correlation{}".format("AdvancedLevelCorrelator", LEVEL))
-context_id = "{}Layer{}Correlation{}".format("AdvancedLevelCorrelator", LEVEL)
+print("{}, Layer {} Correlation{}".format("AdvancedLevelCorrelator", LEVEL, NUMBER))
+context_id = "{}Layer{}Correlation{}".format("AdvancedLevelCorrelator", LEVEL, NUMBER)
 
 
 class AdvancedLevelCorrelator(Plugin):
@@ -30,9 +30,7 @@ class AdvancedLevelCorrelator(Plugin):
         if window.isEmpty():
 
             options = { "expire": 1, "threshold": 2 ,"alert_on_expire": False }
-            initial_attrs = {"alert.correlation_alert.name": "Layer {} Correlation".format(LEVEL),
-            "alert.classification.text": "MyFirstAdvancedLevelScan{}".format(NUMBER),
-            "alert.assessment.impact.severity": "high"}
+            initial_attrs = {"alert.correlation_alert.name": "Layer {} Correlation".format(LEVEL), "alert.classification.text": "MyFirstAdvancedLevelScan{}".format(NUMBER), "alert.assessment.impact.severity": "high"}
 
             window.bindContext(options, initial_attrs)
 

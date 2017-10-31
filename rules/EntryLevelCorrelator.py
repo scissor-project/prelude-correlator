@@ -16,14 +16,14 @@ class EntryLevelCorrelator(Plugin):
         if idmef.get("alert.correlation_alert.name") is not None:
          return
 
+        print("The context not exists {}".format(context_search(context_id) is None))
+
         window = self.getWindowHelper(WeakWindowHelper, context_id)
         if window.isEmpty():
 
 
          options = { "expire": 1, "threshold": 5 ,"alert_on_expire": False }
-         initial_attrs = {"alert.correlation_alert.name": "Layer {} Correlation".format(LEVEL),
-         "alert.classification.text": "MyFirstEntryLevelScan{}".format(NUMBER),
-         "alert.assessment.impact.severity", "high"}
+         initial_attrs = {"alert.correlation_alert.name": "Layer {} Correlation".format(LEVEL),"alert.classification.text": "MyFirstEntryLevelScan{}".format(NUMBER),"alert.assessment.impact.severity": "high"}
 
          #Create a context that:
          #- expires after 1 seconds of inactivity
