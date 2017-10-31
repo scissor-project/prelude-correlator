@@ -1,11 +1,14 @@
 from preludecorrelator.pluginmanager import Plugin
 from preludecorrelator.idmef import IDMEF
-from preludecorrelator.contexthelpers.StrongContextHelper import StrongContextHelper
+from preludecorrelator.context import Context
 from preludecorrelator.context import search as ctx_search
+from preludecorrelator.windows.StrongWindowHelper import StrongWindowHelper
 
 LEVEL = 2
-print("{}, Layer {} Correlation".format("AdvancedLevelCorrelator", LEVEL))
-context_id = "{}Layer{}Correlation".format("AdvancedLevelCorrelator", LEVEL)
+NUMBER = 0
+print("{}, Layer {} Correlation{}".format("AdvancedLevelCorrelator", LEVEL))
+context_id = "{}Layer{}Correlation{}".format("AdvancedLevelCorrelator", LEVEL)
+
 
 class AdvancedLevelCorrelator(Plugin):
 
@@ -19,20 +22,24 @@ class AdvancedLevelCorrelator(Plugin):
          return
 
         print("{} received correlation".format(self.__class__.__name__))
+        print(corr_name)
+        print(idmef)
 
-        #ctx = WeakContextHelper( context_id, { "expire": 1, "threshold": 2 ,"alert_on_expire": False }, update = True, idmef=idmef)
-        ctx = ctx_search(context_id)
-        if ctx is None:
-         ctx = StrongContextHelper( context_id, { "expire": 1, "threshold": 2 ,"alert_on_expire": False }, idmef=idmef)
-         ctx.set("alert.correlation_alert.name", "Layer 2 Correlation")
-         ctx.set("alert.classification.text", "MyFirstAdvancedLevelScan")
-         ctx.set("alert.assessment.impact.severity", "high")
-        else:
-         #update context
-         ctx = StrongContextHelper( context_id, { "expire": 1, "threshold": 2 ,"alert_on_expire": False }, idmef=idmef)
+        window = self.getWindowHelper(StrongWindowHelper, context_id)
 
-        if ctx.checkCorrelationAlert():
+        if window.isEmpty():
+            options = { "expire": 1, "threshold": 2 ,"alert_on_expire": False }
+            initial_attrs = {"alert.correlation_alert.name": "Layer {} Correlation".format(LEVEL),
+            "alert.classification.text": "MyFirstAdvancedLevelScan{}".format(NUMBER),
+            "alert.assessment.impact.severity": "high"}
+
+            window.bindContext(options, initial_attrs)
+
+        window.addIdmef(idmef)
+
+        #if ctx.getWindowHelper().checkCorrelationWindow():
+        if window.checkCorrelationWindow():
           print("Hello from %s" % self.__class__.__name__)
-          print(ctx.get("alert.classification.text"))
-          ctx.alert()
-          print("Alert Finished AdvancedLevelCorrelator")
+          print(window.getIdmefField("alert.classification.text"))
+          window.generateCorrelationAlert()
+          print("Alert Finished %s" % self.__class__.__name__)

@@ -235,14 +235,23 @@ def set_prelude_client(client):
     global prelude_client
     prelude_client = client
 
-class AnalyzerContents(object):
+class IDMEFCache(object):
+
+    def cacheIdmef(idmef):
+        pass
+
+class AnalyzerContents(IDMEFCache):
 
     def __init__(self, attributes=None):
+        super(AnalyzerContents, self).__init__()
         self.analyzers = IDMEF()
         if attributes is None:
             self.attributes = ["name","manufacturer","model","version","class","ostype","osversion","node.category","node.name","process.name","process.pid","process.path"]
 
-    def copyAnalyzers(self, source, dest):
+    def cache(self, source, dest):
+        return self._copyAnalyzers(source, dest)
+
+    def _copyAnalyzers(self, source, dest):
         list_attr = source.get("alert.analyzer(*)")
         len_list_attr = len(list_attr)
         for a in range(len_list_attr):
@@ -255,8 +264,8 @@ class AnalyzerContents(object):
                     dest.set("{}.{}".format(analyzer_num,att), to_set)
 
     def saveAnalyzerContents(self, idmef):
-        self.copyAnalyzers(idmef, self.analyzers)
+        self.cache(idmef, self.analyzers)
 
 
     def restoreAnalyzerContents(self, idmef):
-        self.copyAnalyzers(self.analyzers, idmef)
+        self.cache(self.analyzers, idmef)

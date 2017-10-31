@@ -23,11 +23,12 @@ import imp
 
 from preludecorrelator import log, error, require, plugins
 from preludecorrelator.idmef import AnalyzerContents
+from preludecorrelator.windowhelper import WindowHolder
 
 logger = log.getLogger(__name__)
 
+class Plugin(WindowHolder):
 
-class Plugin(object):
     enable = True
     autoload = True
     conflict = []
@@ -36,6 +37,7 @@ class Plugin(object):
         return self.env.config.get(self.__class__.__name__, option, default=default, type=type)
 
     def __init__(self, env):
+        super(Plugin, self).__init__()
         self.env = env
 
     def _getName(self):
@@ -49,7 +51,6 @@ class Plugin(object):
 
     def run(self, idmef):
         pass
-
 
 class PluginDependenciesError(ImportError):
      pass
@@ -205,13 +206,6 @@ class PluginManager(object):
 
     def getActivePlugins():
      return self._active_plugins
-
-    def addActiveIDMEF(self, idmef_to_add):
-     if len(self._active_plugins) == 0:
-      return
-     p_to_add = self._active_plugins[-1]
-     p_to_add.append(idmef_to_add)
-     self._active_plugins[-1] = p_to_add
 
     def print_active_plugins(self):
      for p in self._active_plugins:
