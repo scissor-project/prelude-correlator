@@ -55,4 +55,5 @@ class WeakWindowHelper(WindowHelper):
         tmp_ctx = ctx_search(self._name)
         self._ctx.destroy()
         self.unbindContext()
+        self.rst()
         tmp_ctx.alert()
