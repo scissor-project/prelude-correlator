@@ -183,6 +183,7 @@ class PreludeClient(object):
         for msg in self._receiver.run():
 
             if msg and self._criteria.match(msg):
+                print("Received MSG ID : {}".format(msg.get("alert.messageid"))) 
                 self._handle_event(msg)
 
             now = time.time()

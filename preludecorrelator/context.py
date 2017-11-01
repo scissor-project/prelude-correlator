@@ -209,47 +209,6 @@ class Context(IDMEF, Timer):
                 return True
 
         return False
-    '''
-    def setWindowHelper(self, windowHelper):
-        self._windowHelper = windowHelper(self)
-
-    def getWindowHelper(self):
-        return self._windowHelper
-    '''
-    
-    def alert(self):
-        #print(self._lastIDMEF)
-        #saving analyzerid
-        #analyzerid = self._lastIDMEF.get("alert.analyzer(0).analyzerid")
-
-        #tmp_analyzer = AnalyzerContents()
-        #tmp_analyzer.saveAnalyzerContents(self._lastIDMEF)
-
-        #print(self)
-        #print("############")
-        #The context must be destroyed before because we cannot permit that a plugin receives
-        #IDMEF when the context is already active, we would have inconsistency
-
-        #self.destroy()
-
-        #To maintain window persistance we could create another context and assign the old window
-        #print("#BEFORE ALERT#")
-        #print(analyzerid)
-        #print(analyzerid2)
-
-        super(Context, self).alert()
-        #restoring analyzerid
-        #self._lastIDMEF.set("alert.analyzer(0).analyzerid", analyzerid)
-        #if analyzerid2 is not None:
-        #    self._lastIDMEF.set("alert.analyzer(1).analyzerid", analyzerid2)
-
-        #tmp_analyzer.restoreAnalyzerContents(self._lastIDMEF)
-
-        #cannot just reset update count because the alert continue to add
-        #so the context must be removed from the context table
-        print(self)
-
-
 
     def merge(self, ctx):
         self._update_count += ctx._update_count

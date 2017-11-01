@@ -64,7 +64,7 @@ class WindowHelper(object):
     def unbindContext(self):
         pass
 
-    def corrConditions(self, params={}):
+    def corrConditions(self):
         pass
 
 class WindowHolder(object):
