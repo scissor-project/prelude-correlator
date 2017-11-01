@@ -15,6 +15,14 @@ class WindowHelper(object):
 
     def setOptions(self, options):
         self._options = options
+        if self._ctx is not None:
+            self._ctx.setOptions(self._options)
+
+    def setOption(self, option, value):
+        self._options[option] = value
+        if self._ctx is not None:
+            self._ctx.setOptions(self._options)
+
 
     def getInitialAttrs(self):
         return self._initialAttrs
@@ -41,7 +49,7 @@ class WindowHelper(object):
     def checkCorrelationWindow(self):
         pass
 
-    def generateCorrelationAlert(self):
+    def generateCorrelationAlert(self, send=True):
         pass
 
     def rst(self):
@@ -56,6 +64,8 @@ class WindowHelper(object):
     def unbindContext(self):
         pass
 
+    def corrConditions(self, params={}):
+        pass
 
 class WindowHolder(object):
 
