@@ -180,15 +180,13 @@ class PreludeClient(object):
 
     def run(self):
         last = time.time()
-        orig =time.time()
         for msg in self._receiver.run():
+
             if msg and self._criteria.match(msg):
                 self._handle_event(msg)
 
             now = time.time()
             if now - last >= 1:
-                print(now-orig)
-                print("Context wakeup")
                 context.wakeup(now)
                 last = now
 

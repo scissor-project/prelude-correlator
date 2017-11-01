@@ -7,11 +7,12 @@ class WeakWindowHelper(WindowHelper):
 
     def __init__(self, name):
         super(WeakWindowHelper, self).__init__(name)
-        #self._origTime = time.time()
+        self._origTime = time.time()
 
 
     def isEmpty(self):
         return ctx_search(self._name) is None
+
 
     def bindContext(self, options, initial_attrs):
         res = ctx_search(self._name)
@@ -21,9 +22,14 @@ class WeakWindowHelper(WindowHelper):
          self._ctx = res
         self._options = options
         self.initialAttrs = initial_attrs
-
         for key,value in self.initialAttrs.iteritems():
-            self._ctx.set(key,value)
+         self._ctx.set(key,value)
+
+    def _restoreContext(self, options, initial_attrs):
+         self._ctx = Context(self._name, options, update=False)
+
+         for key,value in initial_attrs.iteritems():
+             self._ctx.set(key,value)
 
     def unbindContext(self):
         self._ctx = None
@@ -35,9 +41,14 @@ class WeakWindowHelper(WindowHelper):
         self._ctx.set(idmef_field, value)
 
     def rst(self):
-        pass
+        self._origTime = time.time()
 
     def addIdmef(self, idmef):
+        now = time.time()
+        if now - self._origTime >= self._ctx.getOptions()["expire"]:
+            self._ctx.destroy()
+            self._restoreContext(self._options, self._initialAttrs)
+            self.rst()
         self._ctx.update(options=self._ctx.getOptions(), idmef=idmef, timer_rst=False)
 
 
