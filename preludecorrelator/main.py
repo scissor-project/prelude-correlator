@@ -181,7 +181,6 @@ class PreludeClient(object):
     def run(self):
         last = time.time()
         for msg in self._receiver.run():
-            print("run")
             if msg and self._criteria.match(msg):
                 print("Received MSG ID : {}".format(msg.get("alert.messageid")))
                 self._handle_event(msg)
