@@ -81,7 +81,6 @@ class WindowHolder(object):
         return new_inst
 
 
-
     '''
     def bindWindowHelper(self, class_name, ctx_name):
         ctx = ctx_search(context_id)

@@ -22,8 +22,12 @@ class EntryLevelCorrelator(Plugin):
         #Receive only simple alerts, not correlation alerts
         if idmef.get("alert.correlation_alert.name") is not None:
          return
+        #ctxHelper = getContextHelper
+
+        #correlator = self.getContextHelper(context_id,TwoCountersWindowHelper)
 
         window = self.getWindowHelper(TwoCountersWindowHelper, context_id)
+
         if window.isEmpty():
 
          options = { "expire": 1, "threshold": 5 ,"alert_on_expire": False }
@@ -37,11 +41,12 @@ class EntryLevelCorrelator(Plugin):
 
          window.bindContext(options, initial_attrs)
 
+        #process idmef
         window.addIdmef(idmef)
-
 
         if window.checkCorrelationWindow():
           print("Hello from %s" % self.__class__.__name__)
           print(window.getIdmefField("alert.classification.text"))
           window.generateCorrelationAlert()
+          #self.contexts.append(ctx)
           print("%s Alert finished" % self.__class__.__name__)
