@@ -2,7 +2,7 @@ from context import search as ctx_search
 from context import getName as getCtxName
 from context import Context
 
-class WindowHelper(object):
+class ContextHelper(object):
 
     def __init__(self, name):
         self._name = getCtxName(name)
@@ -11,7 +11,10 @@ class WindowHelper(object):
         self._ctx = None
 
     def getOptions(self):
-        return self._options
+        if self._ctx is None:
+         return self._options
+        else:
+         return self._ctx.getOptions()
 
     def setOptions(self, options):
         self._options = options
@@ -67,17 +70,17 @@ class WindowHelper(object):
     def corrConditions(self):
         pass
 
-class WindowHolder(object):
+class ContextHelperHolder(object):
 
     def __init__(self):
-        self._windowHelpers = []
+        self._contextHelpers = []
 
-    def getWindowHelper(self, class_name, ctx_name):
-        for w in self._windowHelpers:
+    def getContextHelper(self, ctx_name, class_name):
+        for w in self._contextHelpers:
             if w.getName() == getCtxName(ctx_name):
                 return w
         new_inst = class_name(ctx_name)
-        self.addWindowHelper(new_inst)
+        self.addContextHelper(new_inst)
         return new_inst
 
 
@@ -117,5 +120,5 @@ class WindowHolder(object):
     def getWindowHelpers(self):
         return self._windowHelpers()
 
-    def addWindowHelper(self, window_helper):
-        self._windowHelpers.append(window_helper)
+    def addContextHelper(self, context_helper):
+        self._contextHelpers.append(context_helper)
