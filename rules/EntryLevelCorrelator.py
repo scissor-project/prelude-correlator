@@ -2,7 +2,7 @@ from preludecorrelator.pluginmanager import Plugin
 from preludecorrelator.idmef import IDMEF
 from preludecorrelator.context import Context
 from preludecorrelator.context import search as context_search
-from preludecorrelator.windows.StrongWindowHelper import StrongWindowHelper
+from preludecorrelator.contexthelpers.StrongWindowHelper import StrongWindowHelper
 
 LEVEL = 1
 NUMBER = 1
@@ -12,7 +12,7 @@ context_id = "{}Layer{}Correlation{}".format("EntryLevelCorrelator", LEVEL, NUMB
 
 class TwoCountersWindowHelper(StrongWindowHelper):
 
-    def corrConditions(self, params={}):
+    def corrConditions(self):
         counter = len(self.getAlertsReceivedInWindow())
         print("I am {} : reaching threshold with counter {}".format(self._name, counter))
         return counter >= self._options["threshold"]
@@ -24,9 +24,9 @@ class EntryLevelCorrelator(Plugin):
          return
         #ctxHelper = getContextHelper
 
-        #correlator = self.getContextHelper(context_id,TwoCountersWindowHelper)
+        correlator = self.getContextHelper(context_id,TwoCountersWindowHelper)
 
-        window = self.getWindowHelper(TwoCountersWindowHelper, context_id)
+        #window = self.getWindowHelper(TwoCountersWindowHelper, context_id)
 
         if window.isEmpty():
 
@@ -45,8 +45,12 @@ class EntryLevelCorrelator(Plugin):
         window.addIdmef(idmef)
 
         if window.checkCorrelationWindow():
+
           print("Hello from %s" % self.__class__.__name__)
-          print(window.getIdmefField("alert.classification.text"))
-          window.generateCorrelationAlert()
+          #print(window.getIdmefField("alert.classification.text"))
+          print(correlator.getIdmefField("alert.classification.text"))
+
+          #window.generateCorrelationAlert()
+          correlator.generateCorrelationAlert()
           #self.contexts.append(ctx)
           print("%s Alert finished" % self.__class__.__name__)

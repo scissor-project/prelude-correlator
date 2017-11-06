@@ -23,11 +23,11 @@ import imp
 
 from preludecorrelator import log, error, require, plugins
 from preludecorrelator.idmef import AnalyzerContents
-from preludecorrelator.windowhelper import WindowHolder
+from preludecorrelator.contexthelper import ContextHelperHolder
 
 logger = log.getLogger(__name__)
 
-class Plugin(WindowHolder):
+class Plugin(ContextHelperHolder):
 
     enable = True
     autoload = True

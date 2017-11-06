@@ -49,7 +49,7 @@ class ContextHelper(object):
     def getName(self):
         return self._name
 
-    def checkCorrelationWindow(self):
+    def checkCorrelation(self):
         pass
 
     def generateCorrelationAlert(self, send=True):
