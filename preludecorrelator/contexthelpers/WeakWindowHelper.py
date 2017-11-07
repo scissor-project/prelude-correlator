@@ -45,34 +45,39 @@ class WeakWindowHelper(ContextHelper):
     def rst(self):
         self._origTime = time.time()
 
-    def addIdmef(self, idmef):
+    def processIdmef(self, idmef, addAlertReference=True):
         now = time.time()
-        if now - self._origTime >= self._ctx.getOptions()["expire"]:
-            self._ctx.destroy()
-            self._restoreContext(self._options, self._initialAttrs)
+        if now - self._origTime >= self._ctx.getOptions()["window"]:
+            if self._ctx.getOptions["reset_ctx_on_window_expiration"]:
+                self._ctx.destroy()
+                self._restoreContext(self._options, self._initialAttrs)
+            else:
+                self._ctx.resetCount()
             self.rst()
-        self._ctx.update(options=self._ctx.getOptions(), idmef=idmef, timer_rst=False)
 
-    def _countAlertReceived(self):
-     alert_received = self._ctx.get("alert.correlation_alert.alertident(*).analyzerid")
-     if alert_received is None:
-         alert_received = 0
-     else:
-         alert_received = len(alert_received)
-     return alert_received
+        self._ctx.update(options=self._ctx.getOptions(), idmef=idmef, timer_rst=True)
+    def countAlertsReceivedInWindow(self):
+        return self._ctx.getUpdateCount()
 
-    def checkCorrelationWindow(self):
-         alert_received = self._countAlertReceived()
+    def corrConditions(self):
+        alert_received = self.countAlertsReceivedInWindow()
+        print("I am {}, alert received {}".format(self._name, alert_received))
+        return alert_received >= self._ctx.getOptions()["threshold"]
 
-         if alert_received >= self._ctx.getOptions()["threshold"]:
-             return True
+    def checkCorrelation(self):
+        return self._checkCorrelationWindow()
 
-        return False
+    def _checkCorrelationWindow(self):
+         #alert_received = self._countAlertReceived()
+         #print("I am {}, alert received {}".format(self._name, alert_received))
+         #return alert_received >= self._ctx.getOptions()["threshold"]
+         return self.corrConditions()
 
     def generateCorrelationAlert(self, send=True):
         tmp_ctx = ctx_search(self._name)
-        self._ctx.destroy()
-        self.unbindContext()
+        if self._ctx.getOptions["reset_ctx_on_window_expiration"]:
+            self._ctx.destroy()
+            self.unbindContext()
         self.rst()
         if send:
             tmp_ctx.alert()

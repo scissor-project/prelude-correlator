@@ -28,29 +28,31 @@ class EntryLevelCorrelator(Plugin):
 
         #window = self.getWindowHelper(TwoCountersWindowHelper, context_id)
 
-        if window.isEmpty():
 
-         options = { "expire": 1, "threshold": 5 ,"alert_on_expire": False }
-
+        #if window.isEmpty():
+        correlator.isEmpty():
+         options = { "expire": 5, "threshold": 5 ,"alert_on_expire": False, "window": 5, "reset_ctx_on_window_expiration": True }
          initial_attrs = {"alert.correlation_alert.name": "Layer {} Correlation".format(LEVEL),"alert.classification.text": "MyFirstEntryLevelScan{}".format(NUMBER),"alert.assessment.impact.severity": "high"}
 
          #Create a context that:
-         #- expires after 1 seconds of inactivity
+         #- expires after 5 seconds of inactivity
          #- generates a correlation alert after 5 msg received
-         #- checks for the threshold in a window of 1 second, if the window expires the correlation period restarts
+         #- checks for the threshold in a window of 5 second, if the window expires the correlation period restarts
+         correlator.bindContext(options, initial_attrs)
 
-         window.bindContext(options, initial_attrs)
-
+        #get options e set options devono essere per forza di un contesto
+        #quando ci sta window expiration prendo il campo options che non viene mai modificato e lo setto nel ctx
         #process idmef
-        window.addIdmef(idmef)
+        correlator.update(idmef=idmef)
 
         if window.checkCorrelationWindow():
+
 
           print("Hello from %s" % self.__class__.__name__)
           #print(window.getIdmefField("alert.classification.text"))
           print(correlator.getIdmefField("alert.classification.text"))
 
           #window.generateCorrelationAlert()
-          correlator.generateCorrelationAlert()
+          correlator.generateCorrelationAlert(send=True)
           #self.contexts.append(ctx)
           print("%s Alert finished" % self.__class__.__name__)
