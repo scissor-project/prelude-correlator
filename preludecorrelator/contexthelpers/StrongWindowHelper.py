@@ -14,10 +14,22 @@ class StrongWindowHelper(ContextHelper):
 
     def isEmpty(self):
         return len(self._timestamps) == 0
-
+'''
     def bindContext(self, options, initial_attrs):
         self._options = options
         self._initialAttrs = initial_attrs
+'''
+    def bindContext(self, options, initial_attrs):
+        res = ctx_search(self._name)
+        if res is None:
+         self._ctx = Context(self._name, options, update=False)
+         self._timestamps = []
+        else:
+         self._ctx = res
+        self._options = options
+        self.initialAttrs = initial_attrs
+        for key,value in self.initialAttrs.iteritems():
+         self._ctx.set(key,value)
 
     def unbindContext(self):
         self._ctx = None
