@@ -1,11 +1,11 @@
 import time
-from ..windowhelper import WindowHelper
+from ..contexthelper import ContextHelper
 from ..context import Context
 from ..idmef import AnalyzerContents
 from ..context import search as ctx_search
 
 
-class StrongWindowHelper(WindowHelper):
+class StrongWindowHelper(ContextHelper):
 
 
     def __init__(self, name):
@@ -30,6 +30,20 @@ class StrongWindowHelper(WindowHelper):
 
     def rst(self):
         self._timestamps = []
+
+    def update(self, idmef=None):
+        now = time.time()
+        len_timestamps = len(self._timestamps)
+        for t in range(len_timestamps-1,-1,-1):
+            if now - self._timestamps[t][0] >= self._options["expire"]:
+               print("I am {} : del timestamps[{}]".format(self._name, t))
+               self._timestamps.pop(t)
+        tmp_analyzer = None
+        if idmef is not None:
+            tmp_analyzer = AnalyzerContents()
+            tmp_analyzer.saveAnalyzerContents(idmef)
+
+        self._timestamps.append([time.time(),idmef, tmp_analyzer])
 
     def addIdmef(self, idmef):
         now = time.time()
@@ -61,7 +75,10 @@ class StrongWindowHelper(WindowHelper):
 
         return alerts
 
-    def checkCorrelationWindow(self):
+    def checkCorrelation(self):
+        return self._checkCorrelationWindow()
+
+    def _checkCorrelationWindow(self):
      if self.corrConditions():
          print("I am {} : threshold reached".format(self._name))
          self._ctx = Context(self._name, self._options, self._initialAttrs)

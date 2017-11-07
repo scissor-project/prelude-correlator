@@ -1,9 +1,9 @@
 import time
-from ..windowhelper import WindowHelper
+from ..contexthelper import ContextHelper
 from..context import Context
 from ..context import search as ctx_search
 
-class WeakWindowHelper(WindowHelper):
+class WeakWindowHelper(ContextHelper):
 
     def __init__(self, name):
         super(WeakWindowHelper, self).__init__(name)
