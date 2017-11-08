@@ -46,7 +46,8 @@ class AdvancedLevelCorrelator(Plugin):
 
 
         #window.addIdmef(idmef)
-        correlator.addIdmef(idmef)
+        #correlator.addIdmef(idmef)
+        correlator.processIdmef(idmef=idmef, addAlertReference=True)
 
 
         #if window.checkCorrelationWindow():
@@ -56,6 +57,6 @@ class AdvancedLevelCorrelator(Plugin):
           #print(window.getIdmefField("alert.classification.text"))
           print(correlator.getIdmefField("alert.classification.text"))
           #window.generateCorrelationAlert()
-          correlator.generateCorrelationAlert()
+          correlator.generateCorrelationAlert(send=True, destroy=True)
 
           print("Alert Finished %s" % self.__class__.__name__)
