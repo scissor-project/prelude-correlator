@@ -73,9 +73,10 @@ class WeakWindowHelper(ContextHelper):
          #return alert_received >= self._ctx.getOptions()["threshold"]
          return self.corrConditions()
 
-    def generateCorrelationAlert(self, send=True):
+    def generateCorrelationAlert(self, send=True, destroy=False):
         tmp_ctx = ctx_search(self._name)
-        if self._ctx.getOptions["reset_ctx_on_window_expiration"]:
+        self._ctx.resetCount()
+        if destroy:
             self._ctx.destroy()
             self.unbindContext()
         self.rst()

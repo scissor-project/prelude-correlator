@@ -52,8 +52,7 @@ class EntryLevelCorrelator(Plugin):
           print("Hello from %s" % self.__class__.__name__)
           #print(window.getIdmefField("alert.classification.text"))
           print(correlator.getIdmefField("alert.classification.text"))
-
           #window.generateCorrelationAlert()
-          correlator.generateCorrelationAlert(send=True)
+          correlator.generateCorrelationAlert(send=True, destroy_ctx=False)
           #self.contexts.append(ctx)
           print("%s Alert finished" % self.__class__.__name__)
