@@ -38,9 +38,7 @@ class AdvancedLevelCorrelator(Plugin):
         #if window.isEmpty():
         if correlator.isEmpty():
 
-        if window.isEmpty():
-
-            options = { "expire": 1, "threshold": 2 ,"alert_on_expire": False }
+            options = { "expire": 2, "threshold": 2 ,"alert_on_expire": False, "window": 2, "reset_ctx_on_window_expiration": True }
             initial_attrs = {"alert.correlation_alert.name": "Layer {} Correlation".format(LEVEL), "alert.classification.text": "MyFirstAdvancedLevelScan{}".format(NUMBER), "alert.assessment.impact.severity": "high"}
 
             #window.bindContext(options, initial_attrs)

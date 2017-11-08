@@ -44,16 +44,14 @@ class StrongWindowHelper(ContextHelper):
         #self._initialAttrs[idmef_field] = value
         self._ctx.set(idmef_field, value)
 
-
     def rst(self):
         self._timestamps = []
-
 
     def processIdmef(self, idmef, addAlertReference=True):
         now = time.time()
         len_timestamps = len(self._timestamps)
         for t in range(len_timestamps-1,-1,-1):
-            if now - self._timestamps[t][0] >= self._options["expire"]:
+            if now - self._timestamps[t][0] >= self.ctx.getOptions()["window"]:
                print("I am {} : del timestamps[{}]".format(self._name, t))
                #self._timestamps[t][2].restoreAnalyzerContents(self._timestamps[t][1])
                #self.onIdmefRemoval(self._timestamps[t][1])
@@ -87,8 +85,9 @@ class StrongWindowHelper(ContextHelper):
         print("I am {} : len timestamps {}".format(self._name, len_timestamps))
         alerts = []
         for t in range(len_timestamps-1,-1,-1):
-            if now - self._timestamps[t][0] < self._options["expire"]:
-             print("I am {} : timestamps[{}] < {}".format(self._name, t, self._options["expire"]))
+            #if now - self._timestamps[t][0] < self._options["expire"]:
+            if now - self._timestamps[t][0] < self._ctx.getOptions()["window"]:
+             print("I am {} : timestamps[{}] < {}".format(self._name, t, self._ctx.getOptions()["window"]))
              self._timestamps[t][2].restoreAnalyzerContents(self._timestamps[t][1])
 
              alerts.append(self._timestamps[t][1])
