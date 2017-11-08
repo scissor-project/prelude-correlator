@@ -1,7 +1,7 @@
 from preludecorrelator.pluginmanager import Plugin
 from preludecorrelator.idmef import IDMEF
 from preludecorrelator.context import Context
-import logging
+from preludecorrelator import log
 
 ID_PORT_SCAN_DETECTED = "D1"
 ID_PORT_SCAN_MONITORING = "D0"
@@ -17,12 +17,13 @@ IP_DST = "event.network.ip_dst"
 EXPIRATION = 30
 THRESHOLD = 5
 
-print("### [ModScanPlugin] Log initialization ###")
-logging.basicConfig(filename='~/modscanplugin.log',level=logging.DEBUG)
-
+logger = log.getLogger(__name__)
 
 class ModScanPlugin(Plugin):
-    
+
+    def __init__(self, env):
+        logger.info("Loading %s", ModScanPlugin)
+
 	def _PortScan(self, idmef):
         	#print idmef
 		#logging.debug(str(idmef.get("alert.classification.text")))
@@ -30,12 +31,12 @@ class ModScanPlugin(Plugin):
 		#source = IDMEF.get("alert.source(*).node.address(*).address")
 		source = self._getDataByMeaning(idmef,IP_SRC)
 		dest = self._getDataByMeaning(idmef,IP_DST)
-		
+
 		ctx = Context(("PORT_SCAN_STORM",source,dest), { "expire": EXPIRATION, "threshold": THRESHOLD, "alert_on_expire": True }, update = True, idmef = idmef)
 		if ctx.getUpdateCount() == 0:
 			ctx.set("alert.correlation_alert.name", "Port Scan Storm Detected")
 			ctx.set("alert.classification.text", "PortScanStorm")
-			ctx.set("alert.assessment.impact.severity", "high")		
+			ctx.set("alert.assessment.impact.severity", "high")
 
 	def _getDataByMeaning(self,idmef,meaning):
 		meanings = idmef.get("alert.additional_data(*).meaning")
@@ -45,11 +46,11 @@ class ModScanPlugin(Plugin):
 				to_search = "alert.additional_data({}).data".format(m)
 				d = idmef.get(to_search)
 				return d
-		return None	
+		return None
 
 	def run(self, idmef):
-		ev_id = self._getDataByMeaning(idmef,EVENT_ID)		
+		ev_id = self._getDataByMeaning(idmef,EVENT_ID)
 		if ev_id is None:
-			return		
+			return
 		if  ev_id == ID_PORT_SCAN_DETECTED:
-			self._PortScan(idmef)			
+			self._PortScan(idmef)

@@ -56,7 +56,7 @@ class ContextHelper(object):
     def checkCorrelation(self):
         pass
 
-    def generateCorrelationAlert(self, send=True, destroy=False):
+    def generateCorrelationAlert(self, send=True, destroy_ctx=False):
         pass
 
     def rst(self):
