@@ -13,7 +13,9 @@ class StrongWindowHelper(ContextHelper):
         self._timestamps = []
 
     def isEmpty(self):
-        return len(self._timestamps) == 0
+        #return len(self._timestamps) == 0
+        return ctx_search(self._name) is None
+
 '''
     def bindContext(self, options, initial_attrs):
         self._options = options
@@ -43,11 +45,6 @@ class StrongWindowHelper(ContextHelper):
     def rst(self):
         self._timestamps = []
 
-    def onIdmefAddition(self, idmef):
-        pass
-
-    def onIdmefRemoval(self, idmef):
-        pass
 
     def processIdmef(self, idmef, addAlertReference=True):
         now = time.time()

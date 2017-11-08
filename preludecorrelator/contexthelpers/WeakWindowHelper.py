@@ -8,6 +8,7 @@ class WeakWindowHelper(ContextHelper):
     def __init__(self, name):
         super(WeakWindowHelper, self).__init__(name)
         self._origTime = time.time()
+        self._received = 0
 
 
     def isEmpty(self):
@@ -19,6 +20,7 @@ class WeakWindowHelper(ContextHelper):
         if res is None:
          self._ctx = Context(self._name, options, update=False)
          self._origTime = time.time()
+         self._received = 0
         else:
          self._ctx = res
         self._options = options
@@ -44,6 +46,7 @@ class WeakWindowHelper(ContextHelper):
 
     def rst(self):
         self._origTime = time.time()
+        self._received = 0
 
     def processIdmef(self, idmef, addAlertReference=True):
         now = time.time()
@@ -51,8 +54,6 @@ class WeakWindowHelper(ContextHelper):
             if self._ctx.getOptions["reset_ctx_on_window_expiration"]:
                 self._ctx.destroy()
                 self._restoreContext(self._options, self._initialAttrs)
-            else:
-                self._ctx.resetCount()
             self.rst()
 
         self._ctx.update(options=self._ctx.getOptions(), idmef=idmef, timer_rst=True)
@@ -75,7 +76,6 @@ class WeakWindowHelper(ContextHelper):
 
     def generateCorrelationAlert(self, send=True, destroy=False):
         tmp_ctx = ctx_search(self._name)
-        self._ctx.resetCount()
         if destroy:
             self._ctx.destroy()
             self.unbindContext()
