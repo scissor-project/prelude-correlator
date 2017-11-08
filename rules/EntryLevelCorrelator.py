@@ -30,7 +30,7 @@ class EntryLevelCorrelator(Plugin):
 
 
         #if window.isEmpty():
-        correlator.isEmpty():
+        if correlator.isEmpty():
          options = { "expire": 5, "threshold": 5 ,"alert_on_expire": False, "window": 5}
          initial_attrs = {"alert.correlation_alert.name": "Layer {} Correlation".format(LEVEL),"alert.classification.text": "MyFirstEntryLevelScan{}".format(NUMBER),"alert.assessment.impact.severity": "high"}
 
@@ -46,9 +46,7 @@ class EntryLevelCorrelator(Plugin):
 
         correlator.processIdmef(idmef=idmef, addAlertReference=True)
 
-        if window.checkCorrelationWindow():
-
-
+        if correlator.checkCorrelation():
           print("Hello from %s" % self.__class__.__name__)
           #print(window.getIdmefField("alert.classification.text"))
           print(correlator.getIdmefField("alert.classification.text"))

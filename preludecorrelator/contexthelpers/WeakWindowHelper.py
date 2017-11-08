@@ -52,7 +52,7 @@ class WeakWindowHelper(ContextHelper):
         self._received = self._received + 1
         now = time.time()
         if now - self._origTime >= self._ctx.getOptions()["window"]:
-            if self._ctx.getOptions["reset_ctx_on_window_expiration"]:
+            if self._ctx.getOptions()["reset_ctx_on_window_expiration"]:
                 self._ctx.destroy()
                 self._restoreContext(self._options, self._initialAttrs)
             self.rst()

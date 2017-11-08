@@ -17,14 +17,18 @@ class ContextHelper(object):
          return self._ctx.getOptions()
 
     def setOptions(self, options):
-        self._options = options
+        #self._options = options
         if self._ctx is not None:
-            self._ctx.setOptions(self._options)
+            #self._ctx.setOptions(self._options)
+            self._ctx.setOptions(options)
 
     def setOption(self, option, value):
-        self._options[option] = value
+        #self._options[option] = value
         if self._ctx is not None:
-            self._ctx.setOptions(self._options)
+            opts = self._ctx.getOptions()
+            opts[option] = value
+            #self._ctx.setOptions(self._options)
+            self._ctx.setOptions(opts)
 
 
     def getInitialAttrs(self):
@@ -52,13 +56,17 @@ class ContextHelper(object):
     def checkCorrelation(self):
         pass
 
-    def generateCorrelationAlert(self, send=True):
+    def generateCorrelationAlert(self, send=True, destroy=False):
         pass
 
     def rst(self):
         pass
 
+    '''
     def addIdmef(self,idmef):
+        pass
+    '''
+    def processIdmef(self, idmef, addAlertReference=True):
         pass
 
     def bindContext(self, options, initial_attrs):

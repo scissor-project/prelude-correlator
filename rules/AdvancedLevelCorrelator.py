@@ -51,7 +51,7 @@ class AdvancedLevelCorrelator(Plugin):
 
 
         #if window.checkCorrelationWindow():
-        correlator.checkCorrelation():
+        if correlator.checkCorrelation():
 
           print("Hello from %s" % self.__class__.__name__)
           #print(window.getIdmefField("alert.classification.text"))

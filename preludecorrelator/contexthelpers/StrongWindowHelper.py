@@ -16,11 +16,11 @@ class StrongWindowHelper(ContextHelper):
         #return len(self._timestamps) == 0
         return ctx_search(self._name) is None
 
-'''
-    def bindContext(self, options, initial_attrs):
-        self._options = options
-        self._initialAttrs = initial_attrs
-'''
+    '''
+        def bindContext(self, options, initial_attrs):
+            self._options = options
+            self._initialAttrs = initial_attrs
+    '''
     def bindContext(self, options, initial_attrs):
         res = ctx_search(self._name)
         if res is None:
@@ -51,7 +51,7 @@ class StrongWindowHelper(ContextHelper):
         now = time.time()
         len_timestamps = len(self._timestamps)
         for t in range(len_timestamps-1,-1,-1):
-            if now - self._timestamps[t][0] >= self.ctx.getOptions()["window"]:
+            if now - self._timestamps[t][0] >= self._ctx.getOptions()["window"]:
                print("I am {} : del timestamps[{}]".format(self._name, t))
                #self._timestamps[t][2].restoreAnalyzerContents(self._timestamps[t][1])
                #self.onIdmefRemoval(self._timestamps[t][1])
@@ -77,7 +77,7 @@ class StrongWindowHelper(ContextHelper):
     def corrConditions(self):
         counter = len(self.getAlertsReceivedInWindow())
         print("I am {} : reaching threshold with counter {}".format(self._name, counter))
-        return counter >= self._options["threshold"]
+        return counter >= self._ctx.getOptions()["threshold"]
 
     def getAlertsReceivedInWindow(self):
         now = time.time()
@@ -103,25 +103,25 @@ class StrongWindowHelper(ContextHelper):
 
          alerts = self.getAlertsReceivedInWindow()
          for a in reversed(alerts):
-             self._ctx.update(options=self._options, idmef=a, timer_rst=False)
+             self._ctx.update(options=self._ctx.getOptions(), idmef=a, timer_rst=False)
          return True
      return False
 
 
-'''
-    def _checkCorrelationWindow(self):
-     if self.corrConditions():
-         print("I am {} : threshold reached".format(self._name))
-         self._ctx = Context(self._name, self._options, self._initialAttrs)
-         for key, value in self._initialAttrs.iteritems():
-             self._ctx.set(key,value)
+    '''
+        def _checkCorrelationWindow(self):
+         if self.corrConditions():
+             print("I am {} : threshold reached".format(self._name))
+             self._ctx = Context(self._name, self._options, self._initialAttrs)
+             for key, value in self._initialAttrs.iteritems():
+                 self._ctx.set(key,value)
 
-         alerts = self.getAlertsReceivedInWindow()
-         for a in reversed(alerts):
-             self._ctx.update(options=self._options, idmef=a, timer_rst=False)
-         return True
-     return False
-'''
+             alerts = self.getAlertsReceivedInWindow()
+             for a in reversed(alerts):
+                 self._ctx.update(options=self._options, idmef=a, timer_rst=False)
+             return True
+         return False
+    '''
 
     def generateCorrelationAlert(self, send=True, destroy=False):
         tmp_ctx = ctx_search(self._name)
