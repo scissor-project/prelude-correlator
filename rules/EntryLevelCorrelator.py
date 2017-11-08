@@ -43,7 +43,8 @@ class EntryLevelCorrelator(Plugin):
         #get options e set options devono essere per forza di un contesto
         #quando ci sta window expiration prendo il campo options che non viene mai modificato e lo setto nel ctx
         #process idmef
-        correlator.update(idmef=idmef)
+
+        correlator.processIdmef(idmef=idmef, addAlertReference=True)
 
         if window.checkCorrelationWindow():
 
