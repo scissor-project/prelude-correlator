@@ -9,11 +9,10 @@ NUMBER = 1
 print("{}, Layer {} Correlation{}".format("AdvancedLevelCorrelator", LEVEL, NUMBER))
 context_id = "{}Layer{}Correlation{}".format("AdvancedLevelCorrelator", LEVEL, NUMBER)
 
-class TwoCountersWindowHelper(WeakWindowHelper):
+class ExtendedWindowHelper(WeakWindowHelper):
 
     def corrConditions(self):
         alert_received = self.countAlertsReceivedInWindow()
-        print("I am {}, alert received {}".format(self._name, alert_received))
         return alert_received >= self._ctx.getOptions()["threshold"]
 
 class AdvancedLevelCorrelator(Plugin):
@@ -27,11 +26,7 @@ class AdvancedLevelCorrelator(Plugin):
         if corr_name != "Layer {} Correlation".format(LEVEL - 1):
          return
 
-        print("{} received correlation".format(self.__class__.__name__))
-        print(corr_name)
-        print(idmef)
-
-        correlator = self.getContextHelper(context_id,TwoCountersWindowHelper)
+        correlator = self.getContextHelper(context_id,ExtendedWindowHelper)
 
 
         if correlator.isEmpty():
@@ -46,9 +41,4 @@ class AdvancedLevelCorrelator(Plugin):
 
 
         if correlator.checkCorrelation():
-
-          print("Hello from %s" % self.__class__.__name__)
-          print(correlator.getIdmefField("alert.classification.text"))
           correlator.generateCorrelationAlert(send=True, destroy_ctx=True)
-
-          print("Alert Finished %s" % self.__class__.__name__)

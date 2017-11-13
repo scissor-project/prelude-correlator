@@ -10,11 +10,10 @@ print("{}, {} Level Correlation{}".format("EntryLevelCorrelator", LEVEL, NUMBER)
 #The context should be unique, it's better add the class name since we know it's unique
 context_id = "{}Layer{}Correlation{}".format("EntryLevelCorrelator", LEVEL, NUMBER)
 
-class TwoCountersWindowHelper(StrongWindowHelper):
+class ExtendedStrongWindowHelper(StrongWindowHelper):
 
     def corrConditions(self):
         counter = len(self.getAlertsReceivedInWindow())
-        print("I am {} : reaching threshold with counter {}".format(self._name, counter))
         return counter >= self._options["threshold"]
 
 class EntryLevelCorrelator(Plugin):
@@ -23,7 +22,7 @@ class EntryLevelCorrelator(Plugin):
         if idmef.get("alert.correlation_alert.name") is not None:
          return
 
-        correlator = self.getContextHelper(context_id,TwoCountersWindowHelper)
+        correlator = self.getContextHelper(context_id,ExtendedStrongWindowHelper)
 
         if correlator.isEmpty():
          options = { "expire": 5, "threshold": 5 ,"alert_on_expire": False, "window": 5}
@@ -38,7 +37,4 @@ class EntryLevelCorrelator(Plugin):
         correlator.processIdmef(idmef=idmef, addAlertReference=True)
 
         if correlator.checkCorrelation():
-          print("Hello from %s" % self.__class__.__name__)
-          print(correlator.getIdmefField("alert.classification.text"))
           correlator.generateCorrelationAlert(send=True, destroy_ctx=False)
-          print("%s Alert finished" % self.__class__.__name__)

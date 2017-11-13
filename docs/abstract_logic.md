@@ -1,4 +1,4 @@
-# Abstract Correlation Logic
+# Abstract Correlation Logics
 Prelude Correlator provides the class Context to keep track of a given plugin state.  
 If you want to create a correlation logic over the class Context that can be extended and reused by several plugins just start extending the class ContextHelper.  ContextHelper is a wrapper of the Context class provided by Prelude Correlator, it just contains a context and a few abstract methods to build your own logic over the given context.  StrongWindowHelper and WeakWindowHelper are an example of two classes that extend the ContextHelper class to provide a correlation logic based on a specific correlation period (window) like counting the number of idmef received in a window of 5 seconds.
 The method <i>getContextHelper</i> is provided to retrieve a ContextHelper with a specific id, or create a new one if doesn't exists. In this case the ContextHelper is an instance of StrongWindowHelper.  
