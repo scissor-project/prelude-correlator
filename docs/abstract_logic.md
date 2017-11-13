@@ -1,4 +1,4 @@
-#Abstract Correlation Logic
+# Abstract Correlation Logic
 Prelude Correlator provides the class Context to keep track of a given plugin state.  
 If you want to create a correlation logic over the class Context that can be extended and reused by several plugins just start extending the class ContextHelper.  ContextHelper is a wrapper of the Context class provided by Prelude Correlator, it just contains a context and a few abstract methods to build your own logic over the given context.  StrongWindowHelper and WeakWindowHelper are an example of two classes that extend the ContextHelper class to provide a correlation logic based on a specific correlation period (window) like counting the number of idmef received in a window of 5 seconds.
 The method <i>getContextHelper</i> is provided to retrieve a ContextHelper with a specific id, or create a new one if doesn't exists. In this case the ContextHelper is an instance of StrongWindowHelper.  
@@ -39,7 +39,7 @@ if ctxHelper.checkCorrelation():
 
 
 
-##WeakWindowHelper
+## WeakWindowHelper
 In WeakWindowHelper we define an option <i>"window"</i> in the context and consider a window as the period between the reception of the first idmef and the expiration of the time value set in the option <i>"window"</i> (e.g. 5 seconds). When the window expires the correlation period restarts.
 Suppose you simply want to generate a correlation alert if more than 5 idmef are received in a fixed window of 5 seconds.
 
@@ -75,7 +75,7 @@ if ctxHelper.checkCorrelation():
 ```
 
 
-##StrongWindowHelper
+## StrongWindowHelper
 Another correlation logic could be to "shift" the correlation period (window) every time an idmef is received.  
 In StrongWindowHelper we define an option <i>"window"</i> in the context and use a list to store the timestamps in which idmefs are received. Every time that the <i>processIdmef()</i> method is called, the list is scanned to check if some timestamps are expired. Retrieved the idmefs received in the correlation period defined by the option <i>"window"</i>, if the correlation is successful, a correlation alert is raised.  
 Suppose that we want to generate a correlation alert if at least 5 idmef are received in a window of 5 seconds. Consider a ContextHelper as a list to store idmef.   
