@@ -1,13 +1,11 @@
 from preludecorrelator.pluginmanager import Plugin
-from preludecorrelator.idmef import IDMEF
-from preludecorrelator.context import Context
-from preludecorrelator.context import search as ctx_search
 from preludecorrelator.contexthelpers.WeakWindowHelper import WeakWindowHelper
+from preludecorrelator import log
 
 LEVEL = 2
 NUMBER = 1
-print("{}, Layer {} Correlation{}".format("AdvancedLevelCorrelator", LEVEL, NUMBER))
 context_id = "{}Layer{}Correlation{}".format("AdvancedLevelCorrelator", LEVEL, NUMBER)
+logger = log.getLogger(__name__)
 
 class ExtendedWindowHelper(WeakWindowHelper):
 
@@ -16,6 +14,10 @@ class ExtendedWindowHelper(WeakWindowHelper):
         return alert_received >= self._ctx.getOptions()["threshold"]
 
 class AdvancedLevelCorrelator(Plugin):
+
+    def __init__(self, env):
+        super(AdvancedLevelCorrelator, self).__init__(env)
+        logger.info("Loading %s", self.__class__.__name__)
 
     def run(self, idmef):
         corr_name = idmef.get("alert.correlation_alert.name")

@@ -25,10 +25,7 @@ class ModScanPlugin(Plugin):
         logger.info("Loading %s", ModScanPlugin)
 
 	def _PortScan(self, idmef):
-        	#print idmef
-		#logging.debug(str(idmef.get("alert.classification.text")))
-		#logging.debug('\n\n\n')
-		#source = IDMEF.get("alert.source(*).node.address(*).address")
+
 		source = self._getDataByMeaning(idmef,IP_SRC)
 		dest = self._getDataByMeaning(idmef,IP_DST)
 

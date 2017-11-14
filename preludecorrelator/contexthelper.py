@@ -17,17 +17,13 @@ class ContextHelper(object):
          return self._ctx.getOptions()
 
     def setOptions(self, options):
-        #self._options = options
         if self._ctx is not None:
-            #self._ctx.setOptions(self._options)
             self._ctx.setOptions(options)
 
     def setOption(self, option, value):
-        #self._options[option] = value
         if self._ctx is not None:
             opts = self._ctx.getOptions()
             opts[option] = value
-            #self._ctx.setOptions(self._options)
             self._ctx.setOptions(opts)
 
 
@@ -62,10 +58,6 @@ class ContextHelper(object):
     def rst(self):
         pass
 
-    '''
-    def addIdmef(self,idmef):
-        pass
-    '''
     def processIdmef(self, idmef, addAlertReference=True):
         pass
 
