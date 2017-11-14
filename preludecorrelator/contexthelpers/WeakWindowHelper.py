@@ -2,6 +2,9 @@ import time
 from ..contexthelper import ContextHelper
 from..context import Context
 from ..context import search as ctx_search
+from preludecorrelator import log
+
+logger = log.getLogger(__name__)
 
 class WeakWindowHelper(ContextHelper):
 
@@ -60,21 +63,17 @@ class WeakWindowHelper(ContextHelper):
         self._ctx.update(options=self._ctx.getOptions(), idmef=idmef, timer_rst=True)
 
     def countAlertsReceivedInWindow(self):
-        #return self._ctx.getUpdateCount()
         return self._received
 
     def corrConditions(self):
         alert_received = self.countAlertsReceivedInWindow()
-        #print("I am {}, alert received {}".format(self._name, alert_received))
+        logger.debug("[%s] : alert received %s", self._name, alert_received, level=3)
         return alert_received >= self._ctx.getOptions()["threshold"]
 
     def checkCorrelation(self):
         return self._checkCorrelationWindow()
 
     def _checkCorrelationWindow(self):
-         #alert_received = self._countAlertReceived()
-         #print("I am {}, alert received {}".format(self._name, alert_received))
-         #return alert_received >= self._ctx.getOptions()["threshold"]
          return self.corrConditions()
 
     def generateCorrelationAlert(self, send=True, destroy_ctx=False):

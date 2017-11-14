@@ -3,7 +3,9 @@ from ..contexthelper import ContextHelper
 from ..context import Context
 from ..idmef import AnalyzerContents
 from ..context import search as ctx_search
+from preludecorrelator import log
 
+logger = log.getLogger(__name__)
 
 class StrongWindowHelper(ContextHelper):
 
@@ -13,7 +15,6 @@ class StrongWindowHelper(ContextHelper):
         self._timestamps = []
 
     def isEmpty(self):
-        #return len(self._timestamps) == 0
         return ctx_search(self._name) is None
 
     def bindContext(self, options, initial_attrs):
@@ -32,48 +33,50 @@ class StrongWindowHelper(ContextHelper):
         self._ctx = None
 
     def getIdmefField(self, idmef_field):
-        #return self._initialAttrs[idmef_field]
         return self._ctx.get(idmef_field)
 
     def setIdmefField(self, idmef_field, value):
-        #self._initialAttrs[idmef_field] = value
         self._ctx.set(idmef_field, value)
 
     def rst(self):
         self._timestamps = []
 
     def processIdmef(self, idmef, addAlertReference=True):
-        self._ctx.update()
         now = time.time()
         len_timestamps = len(self._timestamps)
         for t in range(len_timestamps-1,-1,-1):
             if now - self._timestamps[t][0] >= self._ctx.getOptions()["window"]:
-               #print("I am {} : del timestamps[{}]".format(self._name, t))
-               #self._timestamps[t][2].restoreAnalyzerContents(self._timestamps[t][1])
-               #self.onIdmefRemoval(self._timestamps[t][1])
+               logger.debug("[%s] : del timestamps[%s]", self._name, t, level=3)
                self._timestamps.pop(t)
 
-        tmp_analyzer = AnalyzerContents()
-        tmp_analyzer.saveAnalyzerContents(idmef)
-        self._timestamps.append([now, idmef, tmp_analyzer, addAlertReference])
-        #self.onIdmefAddition(idmef)
+        if idmef is not None:
+            tmp_analyzer = AnalyzerContents()
+            tmp_analyzer.saveAnalyzerContents(idmef)
+
+            if addAlertReference:
+             self._ctx.update(options=self._ctx.getOptions(), idmef=idmef, timer_rst=True)
+            self._timestamps.append([now, idmef, tmp_analyzer, not addAlertReference])
+        else:
+            self._ctx.update()
+            self._timestamps.append([now, None, None, False])
+        logger.debug("[%s] : append timestamp", self._name, level=3)
 
     def corrConditions(self):
         counter = len(self.getAlertsReceivedInWindow())
-        #print("I am {} : reaching threshold with counter {}".format(self._name, counter))
+        logger.debug("[%s] : trying to reach threshold %s with counter %s", self._name, self._ctx.getOptions()["threshold"], counter, level=3)
         return counter >= self._ctx.getOptions()["threshold"]
 
     def getAlertsReceivedInWindow(self):
         now = time.time()
         len_timestamps = len(self._timestamps)
-        #print("I am {} : len timestamps {}".format(self._name, len_timestamps))
+        logger.debug("[%s] : len timestamps %s", self._name, len_timestamps, level=3)
+
         alerts = []
         for t in range(len_timestamps-1,-1,-1):
-            #if now - self._timestamps[t][0] < self._options["expire"]:
             if now - self._timestamps[t][0] < self._ctx.getOptions()["window"]:
-             #print("I am {} : timestamps[{}] < {}".format(self._name, t, self._ctx.getOptions()["window"]))
-             self._timestamps[t][2].restoreAnalyzerContents(self._timestamps[t][1])
+             logger.debug("[%s] : timestamps[%s] < %s", self._name, t, self._ctx.getOptions()["window"], level=3)
 
+             self._timestamps[t][2].restoreAnalyzerContents(self._timestamps[t][1])
              alerts.append(self._timestamps[t][1])
 
         return alerts
@@ -83,7 +86,7 @@ class StrongWindowHelper(ContextHelper):
 
     def _checkCorrelationWindow(self):
      if self.corrConditions():
-         #print("I am {} : threshold reached".format(self._name))
+         logger.debug("[%s] : threshold %s reached", self._name, self._ctx.getOptions()["threshold"], level=3)
 
          alerts = self.getAlertsReceivedInWindow()
          for a in reversed(alerts):

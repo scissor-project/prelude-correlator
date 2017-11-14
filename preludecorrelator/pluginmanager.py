@@ -204,21 +204,20 @@ class PluginManager(object):
             except Exception:
                 logger.exception("[%s]: exception occurred while signaling", plugin._getName())
 
-    def getActivePlugins():
+    def getActivePlugins(self):
      return self._active_plugins
 
-    def print_active_plugins(self):
+    def printActivePlugins(self):
      for p in self._active_plugins:
-      print(p[0])
+      print p
 
     def run(self, idmef):
         for plugin in self.getPluginsInstancesList():
             try:
-                
-                if len(self._active_plugins) == 0:
-                 #print("adding "+ plugin._getName())
+                if not self._active_plugins or plugin._getName() != self._active_plugins[-1]:
+                 logger.debug("adding %s", plugin._getName(), level=2)
                  self._active_plugins.append(plugin._getName())
-                 #print(self._active_plugins)
+                 logger.debug("plugins : %s", self._active_plugins, level=2)
 
                  tmp_analyzer = AnalyzerContents()
                  tmp_analyzer.saveAnalyzerContents(idmef)
@@ -226,24 +225,10 @@ class PluginManager(object):
                  plugin.run(idmef)
                  tmp_analyzer.restoreAnalyzerContents(idmef)
 
-                 #print("removing "+ plugin._getName())
+                 logger.debug("removing %s", plugin._getName(), level=2)
                  self._active_plugins.pop()
-                 #print(self._active_plugins)
-                else:
-                 if plugin._getName() != self._active_plugins[-1]:
-                  self._active_plugins.append([plugin._getName()])
-                  #print(self._active_plugins)
+                 logger.debug("plugins : %s", self._active_plugins, level=2)
 
-                  tmp_analyzer = AnalyzerContents()
-                  tmp_analyzer.saveAnalyzerContents(idmef)
-
-                  plugin.run(idmef)
-
-                  tmp_analyzer.restoreAnalyzerContents(idmef)
-
-                  #print("removing "+ plugin._getName())
-                  self._active_plugins.pop()
-                  #print(self._active_plugins)
             except error.UserError as e:
                 logger.error("[%s]: error running plugin : %s", plugin._getName(), e)
 
