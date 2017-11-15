@@ -13,6 +13,7 @@ class StrongWindowHelper(ContextHelper):
     def __init__(self, name):
         super(StrongWindowHelper, self).__init__(name)
         self._timestamps = []
+        self._oldestTimestamp = None
 
     def isEmpty(self):
         return ctx_search(self._name) is None
@@ -22,6 +23,7 @@ class StrongWindowHelper(ContextHelper):
         if res is None:
          self._ctx = Context(self._name, options, update=False)
          self._timestamps = []
+         self._oldestTimestamp = None
         else:
          self._ctx = res
         self._options = options
@@ -43,6 +45,12 @@ class StrongWindowHelper(ContextHelper):
 
     def processIdmef(self, idmef, addAlertReference=True):
         now = time.time()
+        in_window = self._oldestTimestamp is not None and (now - self._oldestTimestamp) < self._ctx.getOptions()["window"]
+        if self._ctx.getOptions()["check_burst"] and in_window:
+            return
+        else:
+            self._oldestTimestamp = None
+
         len_timestamps = len(self._timestamps)
         for t in range(len_timestamps-1,-1,-1):
             if now - self._timestamps[t][0] >= self._ctx.getOptions()["window"]:
@@ -95,6 +103,7 @@ class StrongWindowHelper(ContextHelper):
      return False
 
     def generateCorrelationAlert(self, send=True, destroy_ctx=False):
+        self._oldestTimestamp = self._timestamps[0][0]
         tmp_ctx = ctx_search(self._name)
         if destroy_ctx:
          self._ctx.destroy()
