@@ -23,7 +23,6 @@ class StrongWindowHelper(ContextHelper):
         if res is None:
          self._ctx = Context(self._name, options, update=False)
          self._timestamps = []
-         self._oldestTimestamp = None
         else:
          self._ctx = res
         self._options = options
@@ -84,8 +83,8 @@ class StrongWindowHelper(ContextHelper):
         for t in range(len_timestamps-1,-1,-1):
             if now - self._timestamps[t][0] < self._ctx.getOptions()["window"]:
              logger.debug("[%s] : timestamps[%s] < %s", self._name, t, self._ctx.getOptions()["window"], level=3)
-
-             self._timestamps[t][2].restoreAnalyzerContents(self._timestamps[t][1])
+             if self._timestamps[t][2] is not None:
+                 self._timestamps[t][2].restoreAnalyzerContents(self._timestamps[t][1])
              alerts.append(self._timestamps[t][1])
 
         return alerts
@@ -100,7 +99,7 @@ class StrongWindowHelper(ContextHelper):
                 if t[2] is not None:
                     t[2].restoreAnalyzerContents(t[1])
                     if t[3]:
-                        self._ctx.update(options=self._ctx.getOptions(), idmef=a, timer_rst=False)
+                        self._ctx.update(options=self._ctx.getOptions(), idmef=t[1], timer_rst=False)
             return True
         return False
 

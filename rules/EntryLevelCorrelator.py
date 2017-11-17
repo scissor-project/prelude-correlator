@@ -29,7 +29,7 @@ class EntryLevelCorrelator(Plugin):
         correlator = self.getContextHelper(context_id,ExtendedStrongWindowHelper)
 
         if correlator.isEmpty():
-         options = { "expire": 5, "threshold": 5 ,"alert_on_expire": False, "window": 5, "check_burst": False}
+         options = { "expire": 5, "threshold": 5 ,"alert_on_expire": False, "window": 5, "check_burst": True}
          initial_attrs = {"alert.correlation_alert.name": "Layer {} Correlation".format(LEVEL),"alert.classification.text": "MyFirstEntryLevelScan{}".format(NUMBER),"alert.assessment.impact.severity": "high"}
 
          #Create a context that:
@@ -38,7 +38,7 @@ class EntryLevelCorrelator(Plugin):
          #- checks for the threshold in a window of 5 seconds
          correlator.bindContext(options, initial_attrs)
 
-        correlator.processIdmef(idmef=idmef, addAlertReference=True)
+        correlator.processIdmef(idmef=idmef, addAlertReference=False)
 
         if correlator.checkCorrelation():
-          correlator.generateCorrelationAlert(send=True, destroy_ctx=False)
+          correlator.generateCorrelationAlert(send=True, destroy_ctx=True)
