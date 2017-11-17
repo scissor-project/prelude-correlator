@@ -84,8 +84,8 @@ class StrongWindowHelper(ContextHelper):
         for t in range(len_timestamps-1,-1,-1):
             if now - self._timestamps[t][0] < self._ctx.getOptions()["window"]:
              logger.debug("[%s] : timestamps[%s] < %s", self._name, t, self._ctx.getOptions()["window"], level=3)
-
-             self._timestamps[t][2].restoreAnalyzerContents(self._timestamps[t][1])
+             if self._timestamps[t][2] is not None:
+                 self._timestamps[t][2].restoreAnalyzerContents(self._timestamps[t][1])
              alerts.append(self._timestamps[t][1])
 
         return alerts
