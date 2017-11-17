@@ -83,42 +83,8 @@ class ContextHelperHolder(object):
         self.addContextHelper(new_inst)
         return new_inst
 
-
-    '''
-    def bindWindowHelper(self, class_name, ctx_name):
-        ctx = ctx_search(context_id)
-        if ctx is None:
-            ctx = Context(context_id, options, update = False)
-            for key, value in initial_attrs.iteritems():
-                ctx.set(key, value)
-
-        new_inst = class_name(context_id, ctx,initial_attrs)
-        self.addWindowHelper(new_inst)
-        return new_inst
-
-    def getWindowHelper(self, ctx_name):
-        #ctx = ctx_search(ctx_name)
-        #if ctx is None:
-        #    return None
-        for w in self._windowHelpers:
-            if w.getName() == getCtxName(ctx_name):
-                res = ctx_search(ctx_name)
-                if res is None:
-                    res = Context(ctx_name, w.getOptions(), update = False)
-                    for key, value in w.getInitialAttrs().iteritems():
-                        res.set(key, value)
-                w.setCtx(res)
-                #if w.getCtx() is None:
-                #    w.rst()
-                return w
-        new_inst = class_name(ctx, ctx_name)
-        self.addWindowHelper(new_inst)
-        return new_inst
-    '''
-
-
-    def getWindowHelpers(self):
-        return self._windowHelpers()
+    def getContextHelpers(self):
+        return self._contextHelpers()
 
     def addContextHelper(self, context_helper):
         self._contextHelpers.append(context_helper)

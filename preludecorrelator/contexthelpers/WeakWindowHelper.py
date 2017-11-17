@@ -12,7 +12,7 @@ class WeakWindowHelper(ContextHelper):
         super(WeakWindowHelper, self).__init__(name)
         self._origTime = time.time()
         self._received = 0
-        self._alreadySent = False
+        self._oldestTimestamp = None
 
     def isEmpty(self):
         return ctx_search(self._name) is None
@@ -24,7 +24,7 @@ class WeakWindowHelper(ContextHelper):
          self._ctx = Context(self._name, options, update=False)
          self._origTime = time.time()
          self._received = 0
-         self._alreadySent = False
+         self._oldestTimestamp = None
         else:
          self._ctx = res
         self._options = options
@@ -51,14 +51,16 @@ class WeakWindowHelper(ContextHelper):
     def rst(self):
         self._origTime = time.time()
         self._received = 0
-        self._alreadySent = False
 
     def processIdmef(self, idmef, addAlertReference=True):
         now = time.time()
-        in_window = now - self._origTime < self._ctx.getOptions()["window"]
-        if self._ctx.getOptions()["check_burst"] and in_window and self._alreadySent:
-            return
-            
+        if self._ctx.getOptions()["check_burst"]:
+            in_window = self._oldestTimestamp is not None and (now - self._oldestTimestamp) < self._ctx.getOptions()["window"]
+            if in_window:
+                return
+            else:
+                self._oldestTimestamp = None
+
         self._received = self._received + 1
         if now - self._origTime >= self._ctx.getOptions()["window"]:
             if self._ctx.getOptions()["reset_ctx_on_window_expiration"]:
@@ -83,6 +85,7 @@ class WeakWindowHelper(ContextHelper):
          return self.corrConditions()
 
     def generateCorrelationAlert(self, send=True, destroy_ctx=False):
+        self._oldestTimestamp = time.time()
         tmp_ctx = ctx_search(self._name)
         if destroy_ctx:
             self._ctx.destroy()
