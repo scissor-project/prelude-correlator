@@ -45,11 +45,12 @@ class StrongWindowHelper(ContextHelper):
 
     def processIdmef(self, idmef, addAlertReference=True):
         now = time.time()
-        in_window = self._oldestTimestamp is not None and (now - self._oldestTimestamp) < self._ctx.getOptions()["window"]
-        if self._ctx.getOptions()["check_burst"] and in_window:
-            return
-        else:
-            self._oldestTimestamp = None
+        if self._ctx.getOptions()["check_burst"]:
+            in_window = self._oldestTimestamp is not None and (now - self._oldestTimestamp) < self._ctx.getOptions()["window"]
+            if in_window:
+                return
+            else:
+                self._oldestTimestamp = None
 
         len_timestamps = len(self._timestamps)
         for t in range(len_timestamps-1,-1,-1):
@@ -93,14 +94,15 @@ class StrongWindowHelper(ContextHelper):
         return self._checkCorrelationWindow()
 
     def _checkCorrelationWindow(self):
-     if self.corrConditions():
-         logger.debug("[%s] : threshold %s reached", self._name, self._ctx.getOptions()["threshold"], level=3)
-
-         alerts = self.getAlertsReceivedInWindow()
-         for a in reversed(alerts):
-             self._ctx.update(options=self._ctx.getOptions(), idmef=a, timer_rst=False)
-         return True
-     return False
+        if self.corrConditions():
+            logger.debug("[%s] : threshold %s reached", self._name, self._ctx.getOptions()["threshold"], level=3)
+            for t in reversed(self._timestamps):
+                if t[2] is not None:
+                    t[2].restoreAnalyzerContents(t[1])
+                    if t[3]:
+                        self._ctx.update(options=self._ctx.getOptions(), idmef=a, timer_rst=False)
+            return True
+        return False
 
     def generateCorrelationAlert(self, send=True, destroy_ctx=False):
         self._oldestTimestamp = self._timestamps[0][0]
