@@ -24,7 +24,6 @@ class WeakWindowHelper(ContextHelper):
          self._ctx = Context(self._name, options, update=False)
          self._origTime = time.time()
          self._received = 0
-         self._oldestTimestamp = None
         else:
          self._ctx = res
         self._options = options
@@ -68,7 +67,10 @@ class WeakWindowHelper(ContextHelper):
                 self._restoreContext(self._options, self._initialAttrs)
             self.rst()
 
-        self._ctx.update(options=self._ctx.getOptions(), idmef=idmef, timer_rst=True)
+        if idmef is not None and addAlertReference:
+            self._ctx.update(options=self._ctx.getOptions(), idmef=idmef, timer_rst=True)
+        else:
+            self._ctx.update(options=self._ctx.getOptions(), idmef=None, timer_rst=True)
 
     def countAlertsReceivedInWindow(self):
         return self._received

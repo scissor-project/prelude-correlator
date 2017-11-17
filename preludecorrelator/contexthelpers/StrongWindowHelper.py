@@ -23,7 +23,6 @@ class StrongWindowHelper(ContextHelper):
         if res is None:
          self._ctx = Context(self._name, options, update=False)
          self._timestamps = []
-         self._oldestTimestamp = None
         else:
          self._ctx = res
         self._options = options
@@ -103,6 +102,7 @@ class StrongWindowHelper(ContextHelper):
                         self._ctx.update(options=self._ctx.getOptions(), idmef=t[1], timer_rst=False)
             return True
         return False
+
     def generateCorrelationAlert(self, send=True, destroy_ctx=False):
         self._oldestTimestamp = self._timestamps[0][0]
         tmp_ctx = ctx_search(self._name)

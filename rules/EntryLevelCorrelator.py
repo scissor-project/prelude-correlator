@@ -41,4 +41,4 @@ class EntryLevelCorrelator(Plugin):
         correlator.processIdmef(idmef=idmef, addAlertReference=False)
 
         if correlator.checkCorrelation():
-          correlator.generateCorrelationAlert(send=True, destroy_ctx=False)
+          correlator.generateCorrelationAlert(send=True, destroy_ctx=True)
