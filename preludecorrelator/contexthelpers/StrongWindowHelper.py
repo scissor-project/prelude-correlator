@@ -100,10 +100,9 @@ class StrongWindowHelper(ContextHelper):
                 if t[2] is not None:
                     t[2].restoreAnalyzerContents(t[1])
                     if t[3]:
-                        self._ctx.update(options=self._ctx.getOptions(), idmef=a, timer_rst=False)
+                        self._ctx.update(options=self._ctx.getOptions(), idmef=t[1], timer_rst=False)
             return True
         return False
-
     def generateCorrelationAlert(self, send=True, destroy_ctx=False):
         self._oldestTimestamp = self._timestamps[0][0]
         tmp_ctx = ctx_search(self._name)
