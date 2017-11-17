@@ -38,7 +38,7 @@ class EntryLevelCorrelator(Plugin):
          #- checks for the threshold in a window of 5 seconds
          correlator.bindContext(options, initial_attrs)
 
-        correlator.processIdmef(idmef=idmef, addAlertReference=True)
+        correlator.processIdmef(idmef=idmef, addAlertReference=False)
 
         if correlator.checkCorrelation():
           correlator.generateCorrelationAlert(send=True, destroy_ctx=False)
