@@ -24,7 +24,7 @@ class AdvancedLevelCorrelator(Plugin):
         # We are not interested in simple alerts
         if corr_name is None:
          return
-        # We do not want correlation alerts from upper layers
+        # We only want correlation alerts from exactly the layer below
         if corr_name != "Layer {} Correlation".format(LEVEL - 1):
          return
 
@@ -33,7 +33,7 @@ class AdvancedLevelCorrelator(Plugin):
 
         if correlator.isEmpty():
 
-            options = { "expire": 2, "threshold": 2 ,"alert_on_expire": False, "window": 2, "reset_ctx_on_window_expiration": True, "check_burst": True }
+            options = { "expire": 30, "threshold": 5 ,"alert_on_expire": False, "window": 30, "reset_ctx_on_window_expiration": True, "check_burst": False }
             initial_attrs = {"alert.correlation_alert.name": "Layer {} Correlation".format(LEVEL), "alert.classification.text": "MyFirstAdvancedLevelScan{}".format(NUMBER), "alert.assessment.impact.severity": "high"}
 
             correlator.bindContext(options, initial_attrs)

@@ -95,7 +95,7 @@ class StrongWindowHelper(ContextHelper):
     def _checkCorrelationWindow(self):
         if self.corrConditions():
             logger.debug("[%s] : threshold %s reached", self._name, self._ctx.getOptions()["threshold"], level=3)
-            for t in reversed(self._timestamps):
+            for t in self._timestamps:
                 if t[2] is not None:
                     t[2].restoreAnalyzerContents(t[1])
                     if t[3]:
