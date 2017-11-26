@@ -60,12 +60,12 @@ class WeakWindowHelper(ContextHelper):
             else:
                 self._oldestTimestamp = None
 
-        self._received = self._received + 1
         if now - self._origTime >= self._ctx.getOptions()["window"]:
             if self._ctx.getOptions()["reset_ctx_on_window_expiration"]:
                 self._ctx.destroy()
                 self._restoreContext(self._options, self._initialAttrs)
             self.rst()
+        self._received = self._received + 1
 
         if idmef is not None and addAlertReference:
             self._ctx.update(options=self._ctx.getOptions(), idmef=idmef, timer_rst=True)
