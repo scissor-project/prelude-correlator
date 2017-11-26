@@ -81,7 +81,11 @@ class WeakWindowHelper(ContextHelper):
         return alert_received >= self._ctx.getOptions()["threshold"]
 
     def checkCorrelation(self):
-        return self._checkCorrelationWindow()
+        if "check_on_window_expiration" in self._ctx.getOptions():
+            now = time.time()
+            if now - self._origTime >= self._ctx.getOptions()["window"]:
+                return self._checkCorrelationWindow()
+        return False
 
     def _checkCorrelationWindow(self):
          return self.corrConditions()
