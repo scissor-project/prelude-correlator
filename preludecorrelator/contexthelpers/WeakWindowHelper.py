@@ -11,7 +11,7 @@ class WeakWindowHelper(ContextHelper):
     def __init__(self, name):
         super(WeakWindowHelper, self).__init__(name)
         self._origTime = time.time()
-        self._received = 0
+        self._categories = {}
         self._oldestTimestamp = None
 
     def isEmpty(self):
@@ -23,7 +23,7 @@ class WeakWindowHelper(ContextHelper):
         if res is None:
          self._ctx = Context(self._name, options, update=False)
          self._origTime = time.time()
-         self._received = 0
+         self._categories = {}
         else:
          self._ctx = res
         self._options = options
@@ -49,7 +49,7 @@ class WeakWindowHelper(ContextHelper):
 
     def rst(self):
         self._origTime = time.time()
-        self._received = 0
+        self._categories = {}
 
     def processIdmef(self, idmef, addAlertReference=True, additional_params={}):
         now = time.time()
@@ -60,7 +60,9 @@ class WeakWindowHelper(ContextHelper):
             else:
                 self._oldestTimestamp = None
 
-        self._received = self._received + 1
+        if not additional_params or not (additional_params["category"] in self._categories):
+            return
+        self._categories[additional_params["category"]] = self._categories[additional_params["category"]] + 1
         if now - self._origTime >= self._ctx.getOptions()["window"]:
             if self._ctx.getOptions()["reset_ctx_on_window_expiration"]:
                 self._ctx.destroy()
@@ -73,10 +75,15 @@ class WeakWindowHelper(ContextHelper):
             self._ctx.update(options=self._ctx.getOptions(), idmef=None, timer_rst=True)
 
     def countAlertsReceivedInWindow(self):
-        return self._received
+        return self._categories
 
     def corrConditions(self):
-        alert_received = self.countAlertsReceivedInWindow()
+        ar = self.countAlertsReceivedInWindow()
+        if not ar:
+            return False
+        alert_received = 0
+        for a in ar:
+            alert_received = alert_received + ar[a]
         logger.debug("[%s] : alert received %s", self._name, alert_received, level=3)
         return alert_received >= self._ctx.getOptions()["threshold"]
 
