@@ -214,7 +214,8 @@ class PluginManager(object):
     def run(self, idmef):
         for plugin in self.getPluginsInstancesList():
             try:
-                if not self._active_plugins or plugin._getName() != self._active_plugins[-1]:
+                consider_idmef = (idmef is not None) or (idmef is None and hasattr(plugin, 'processIdmefLack') and plugin.processIdmefLack)
+                if consider_idmef and (not self._active_plugins or plugin._getName() != self._active_plugins[-1]):
                  logger.debug("adding %s", plugin._getName(), level=2)
                  self._active_plugins.append(plugin._getName())
                  logger.debug("plugins : %s", self._active_plugins, level=2)
