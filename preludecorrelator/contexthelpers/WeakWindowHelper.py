@@ -17,20 +17,18 @@ class WeakWindowHelper(ContextHelper):
     def isEmpty(self):
         return ctx_search(self._name) is None
 
-
     def bindContext(self, options, initial_attrs):
         res = ctx_search(self._name)
         if res is None:
-         self._ctx = Context(self._name, options, update=False)
-         self._origTime = time.time()
-         self._categories = {}
+            self._ctx = Context(self._name, options, update=False)
+            self._origTime = time.time()
+            self._resetCategories()
         else:
-         self._ctx = res
+            self._ctx = res
         self._options = options
         self.initialAttrs = initial_attrs
         for key,value in self.initialAttrs.iteritems():
-         self._ctx.set(key,value)
-
+            self._ctx.set(key,value)
 
     def _restoreContext(self, options, initial_attrs):
          self._ctx = Context(self._name, options, update=False)
@@ -47,9 +45,19 @@ class WeakWindowHelper(ContextHelper):
     def setIdmefField(self, idmef_field, value):
         self._ctx.set(idmef_field, value)
 
+    def _resetCategories(self):
+        options = self._ctx.getOptions()
+        self._categories = {}
+        if not ("categories" in options) or not options["categories"]:
+            logger.error("[%s] This Context Helper must have at least one category", self._name)
+            return
+        for cc in options["categories"]:
+            self._categories[cc] = 0
+
     def rst(self):
         self._origTime = time.time()
-        self._categories = {}
+        if self._ctx is not None:
+            self._resetCategories()
 
     def processIdmef(self, idmef, addAlertReference=True, additional_params={}):
         now = time.time()
