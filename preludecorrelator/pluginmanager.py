@@ -220,11 +220,14 @@ class PluginManager(object):
                  self._active_plugins.append(plugin._getName())
                  logger.debug("plugins : %s", self._active_plugins, level=2)
 
-                 tmp_analyzer = AnalyzerContents()
-                 tmp_analyzer.saveAnalyzerContents(idmef)
+                 if idmef is not None:
+                     tmp_analyzer = AnalyzerContents()
+                     tmp_analyzer.saveAnalyzerContents(idmef)
 
                  plugin.run(idmef)
-                 tmp_analyzer.restoreAnalyzerContents(idmef)
+
+                 if idmef is not None:
+                     tmp_analyzer.restoreAnalyzerContents(idmef)
 
                  logger.debug("removing %s", plugin._getName(), level=2)
                  self._active_plugins.pop()
