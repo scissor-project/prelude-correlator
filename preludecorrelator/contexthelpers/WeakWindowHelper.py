@@ -61,6 +61,7 @@ class WeakWindowHelper(ContextHelper):
                 self._oldestTimestamp = None
 
         if not additional_params or not (additional_params["category"] in self._categories):
+            logger.error("[%s] This Context Helper must have at least one category, or a category previously added in additional_params", self._name)
             return
         self._categories[additional_params["category"]] = self._categories[additional_params["category"]] + 1
         if now - self._origTime >= self._ctx.getOptions()["window"]:
@@ -80,6 +81,7 @@ class WeakWindowHelper(ContextHelper):
     def corrConditions(self):
         ar = self.countAlertsReceivedInWindow()
         if not ar:
+            logger.error("[%s] This Context Helper must have at least one category", self._name)
             return False
         alert_received = 0
         for a in ar:
