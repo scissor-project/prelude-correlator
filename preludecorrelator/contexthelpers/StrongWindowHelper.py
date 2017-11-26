@@ -42,7 +42,7 @@ class StrongWindowHelper(ContextHelper):
     def rst(self):
         self._timestamps = []
 
-    def processIdmef(self, idmef, addAlertReference=True):
+    def processIdmef(self, idmef, addAlertReference=True, additional_params={}):
         now = time.time()
         if self._ctx.getOptions()["check_burst"]:
             in_window = self._oldestTimestamp is not None and (now - self._oldestTimestamp) < self._ctx.getOptions()["window"]
