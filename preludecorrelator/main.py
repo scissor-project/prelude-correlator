@@ -183,6 +183,8 @@ class PreludeClient(object):
         for msg in self._receiver.run():
             if msg and self._criteria.match(msg):
                 self._handle_event(msg)
+            elif msg is None:
+                self._handle_event(msg)
 
             now = time.time()
             if now - last >= 1:
