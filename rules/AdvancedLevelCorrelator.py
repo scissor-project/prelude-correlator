@@ -46,7 +46,7 @@ class AdvancedLevelCorrelator(Plugin):
             correlator.bindContext(options, initial_attrs)
 
 
-        correlator.processIdmef(idmef=idmef, addAlertReference=True)
+        correlator.processIdmef(idmef=idmef, addAlertReference=True, additional_params={"category":"my_category"})
 
 
         if correlator.checkCorrelation():
