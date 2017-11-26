@@ -21,7 +21,9 @@ class IdmefLackPlugin(Plugin):
         logger.info("Loading %s", self.__class__.__name__)
 
     def run(self, idmef):
-        corr_name = idmef.get("alert.correlation_alert.name")
+        corr_name = None
+        if idmef is not None:
+            corr_name = idmef.get("alert.correlation_alert.name")
         # We are not interested in simple alerts
         if corr_name is None:
          return
@@ -39,8 +41,8 @@ class IdmefLackPlugin(Plugin):
 
             correlator.bindContext(options, initial_attrs)
 
+        if correlator.checkCorrelation():
+          correlator.generateCorrelationAlert(send=True, destroy_ctx=False)
+
         if idmef.get("alert.correlation_alert.name") != "My Classification":
             correlator.processIdmef(idmef=idmef, addAlertReference=True)
-
-        if correlator.checkCorrelation():
-          correlator.generateCorrelationAlert(send=True, destroy_ctx=True)
