@@ -17,7 +17,6 @@ class AdvancedLevelCorrelator(Plugin):
 
     def __init__(self, env):
         super(AdvancedLevelCorrelator, self).__init__(env)
-        self.processIdmefLack = True
         logger.info("Loading %s", self.__class__.__name__)
 
     def run(self, idmef):
