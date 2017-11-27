@@ -16,7 +16,7 @@ class StrongWindowHelper(ContextHelper):
         self._oldestTimestamp = None
 
     def isEmpty(self):
-        return ctx_search(self._name) is None
+        return ctx_search(self._name) is None or (ctx_search(self._name) is not None and self._ctx is None)
 
     def bindContext(self, options, initial_attrs):
         res = ctx_search(self._name)
