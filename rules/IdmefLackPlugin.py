@@ -41,6 +41,7 @@ class IdmefLackPlugin(Plugin):
             correlator.bindContext(options, initial_attrs)
 
         if correlator.checkCorrelation():
-          correlator.generateCorrelationAlert(send=True, destroy_ctx=False)
+            correlator.generateCorrelationAlert(send=True, destroy_ctx=False)
 
-        correlator.processIdmef(idmef=idmef, addAlertReference=True)
+        if idmef is not None:
+            correlator.processIdmef(idmef=idmef, addAlertReference=True)
