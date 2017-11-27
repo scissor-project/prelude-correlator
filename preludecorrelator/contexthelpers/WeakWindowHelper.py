@@ -92,13 +92,14 @@ class WeakWindowHelper(ContextHelper):
     def _checkCorrelationWindow(self):
          return self.corrConditions()
 
-    def generateCorrelationAlert(self, send=True, destroy_ctx=False):
+    def generateCorrelationAlert(self, send=True, destroy_ctx=False, rst=True):
         self._oldestTimestamp = self._origTime
         tmp_ctx = ctx_search(self._name)
         if destroy_ctx:
             self._ctx.destroy()
             self.unbindContext()
-        self.rst()
+        if rst:
+            self.rst()
         if send:
             tmp_ctx.alert()
         else:

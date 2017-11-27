@@ -52,7 +52,7 @@ class ContextHelper(object):
     def checkCorrelation(self):
         pass
 
-    def generateCorrelationAlert(self, send=True, destroy_ctx=False):
+    def generateCorrelationAlert(self, send=True, destroy_ctx=False, rst=True):
         pass
 
     def rst(self):
