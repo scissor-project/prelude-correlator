@@ -13,6 +13,28 @@ class WeakWindowHelper(ContextHelper):
         self._origTime = time.time()
         self._received = 0
         self._oldestTimestamp = None
+        self._windowExpirationCache = None
+
+    def _WindowExpirationCache(object):
+
+        def __init__(self, ctx, origTime, received):
+            self._ctx = ctx
+            self._origTime = origTime
+            self._received = received
+
+        def getCtx(self):
+            return self._ctx
+
+        def getOrigTime(self):
+            return self._origTime
+
+        def getReceived(self):
+            return self._received
+
+        def rst(self):
+            self._ctx = None
+            self._origTime = None
+            self._received = None
 
     def isEmpty(self):
         return ctx_search(self._name) is None
@@ -24,6 +46,7 @@ class WeakWindowHelper(ContextHelper):
          self._ctx = Context(self._name, options, update=False)
          self._origTime = time.time()
          self._received = 0
+         self._windowExpirationCache = None
         else:
          self._ctx = res
         self._options = options
@@ -62,6 +85,8 @@ class WeakWindowHelper(ContextHelper):
 
         if now - self._origTime >= self._ctx.getOptions()["window"]:
             if self._ctx.getOptions()["reset_ctx_on_window_expiration"]:
+                if self._ctx.getOptions()["check_on_window_expiration"]:
+                    self._windowExpirationCache = self._WindowExpirationCache(self._ctx, self._origTime, self._received)
                 self._ctx.destroy()
                 self._restoreContext(self._options, self._initialAttrs)
             self.rst()
@@ -74,7 +99,10 @@ class WeakWindowHelper(ContextHelper):
             self._ctx.update(options=self._ctx.getOptions(), idmef=None, timer_rst=True)
 
     def countAlertsReceivedInWindow(self):
-        return self._received
+        r = self._received
+        if self._windowExpirationCache is not None:
+            r = self._windowExpirationCache.getReceived()
+        return r
 
     def corrConditions(self):
         alert_received = self.countAlertsReceivedInWindow()
@@ -84,8 +112,15 @@ class WeakWindowHelper(ContextHelper):
     def checkCorrelation(self):
         if "check_on_window_expiration" in self._ctx.getOptions() and self._ctx.getOptions()["check_on_window_expiration"]:
             now = time.time()
-            if now - self._origTime >= self._ctx.getOptions()["window"]:
-                return self._checkCorrelationWindow()
+            ot = self._origTime
+            if self._windowExpirationCache is not None:
+                ot = self._windowExpirationCache.getOrigTime()
+            if now - ot >= self._ctx.getOptions()["window"]:
+                if not self._checkCorrelationWindow():
+                    self._windowExpirationCache = None
+                    return False
+                else:
+                    return True
             return False
         else:
             return self._checkCorrelationWindow()
@@ -95,7 +130,12 @@ class WeakWindowHelper(ContextHelper):
 
     def generateCorrelationAlert(self, send=True, destroy_ctx=False, rst=True):
         self._oldestTimestamp = self._origTime
-        tmp_ctx = ctx_search(self._name)
+        tmp_ctx = None
+        if self._windowExpirationCache is None:
+            tmp_ctx = ctx_search(self._name)
+        else:
+            tmp_ctx = self._windowExpirationCache.getCtx()
+            self._windowExpirationCache = None
         if destroy_ctx:
             self._ctx.destroy()
             self.unbindContext()
