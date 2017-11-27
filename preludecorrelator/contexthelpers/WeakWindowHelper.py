@@ -27,8 +27,8 @@ class WeakWindowHelper(ContextHelper):
         else:
          self._ctx = res
         self._options = options
-        self.initialAttrs = initial_attrs
-        for key,value in self.initialAttrs.iteritems():
+        self._initialAttrs = initial_attrs
+        for key,value in self._initialAttrs.iteritems():
          self._ctx.set(key,value)
 
 
