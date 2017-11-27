@@ -51,7 +51,7 @@ class WeakWindowHelper(ContextHelper):
         self._origTime = time.time()
         self._received = 0
 
-    def processIdmef(self, idmef, addAlertReference=True):
+    def processIdmef(self, idmef, addAlertReference=True, idmefLack=False):
         now = time.time()
         if self._ctx.getOptions()["check_burst"]:
             in_window = self._oldestTimestamp is not None and (now - self._oldestTimestamp) < self._ctx.getOptions()["window"]
@@ -65,7 +65,8 @@ class WeakWindowHelper(ContextHelper):
                 self._ctx.destroy()
                 self._restoreContext(self._options, self._initialAttrs)
             self.rst()
-        self._received = self._received + 1
+        if not idmefLack:
+            self._received = self._received + 1
 
         if idmef is not None and addAlertReference:
             self._ctx.update(options=self._ctx.getOptions(), idmef=idmef, timer_rst=True)

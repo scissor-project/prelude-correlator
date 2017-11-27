@@ -58,7 +58,7 @@ class ContextHelper(object):
     def rst(self):
         pass
 
-    def processIdmef(self, idmef, addAlertReference=True):
+    def processIdmef(self, idmef, addAlertReference=True, idmefLack=False):
         pass
 
     def bindContext(self, options, initial_attrs):

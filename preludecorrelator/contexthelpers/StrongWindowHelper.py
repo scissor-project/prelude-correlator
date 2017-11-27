@@ -42,7 +42,7 @@ class StrongWindowHelper(ContextHelper):
     def rst(self):
         self._timestamps = []
 
-    def processIdmef(self, idmef, addAlertReference=True):
+    def processIdmef(self, idmef, addAlertReference=True, idmefLack=False):
         now = time.time()
         if self._ctx.getOptions()["check_burst"]:
             in_window = self._oldestTimestamp is not None and (now - self._oldestTimestamp) < self._ctx.getOptions()["window"]
@@ -57,17 +57,20 @@ class StrongWindowHelper(ContextHelper):
                logger.debug("[%s] : del timestamps[%s]", self._name, t, level=3)
                self._timestamps.pop(t)
 
-        if idmef is not None:
-            tmp_analyzer = AnalyzerContents()
-            tmp_analyzer.saveAnalyzerContents(idmef)
+        if not idmefLack:
+            if idmef is not None:
+                tmp_analyzer = AnalyzerContents()
+                tmp_analyzer.saveAnalyzerContents(idmef)
 
-            if addAlertReference:
-             self._ctx.update(options=self._ctx.getOptions(), idmef=idmef, timer_rst=True)
-            self._timestamps.append([now, idmef, tmp_analyzer, not addAlertReference])
+                if addAlertReference:
+                 self._ctx.update(options=self._ctx.getOptions(), idmef=idmef, timer_rst=True)
+                self._timestamps.append([now, idmef, tmp_analyzer, not addAlertReference])
+            else:
+                self._ctx.update()
+                self._timestamps.append([now, None, None, False])
+            logger.debug("[%s] : append timestamp", self._name, level=3)
         else:
             self._ctx.update()
-            self._timestamps.append([now, None, None, False])
-        logger.debug("[%s] : append timestamp", self._name, level=3)
 
     def corrConditions(self):
         counter = len(self.getAlertsReceivedInWindow())
