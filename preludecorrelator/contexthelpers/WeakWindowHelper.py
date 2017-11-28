@@ -15,7 +15,7 @@ class WeakWindowHelper(ContextHelper):
         self._oldestTimestamp = None
         self._windowExpirationCache = None
 
-    def _WindowExpirationCache(object):
+    class _WindowExpirationCache(object):
 
         def __init__(self, ctx, origTime, received):
             self._ctx = ctx
@@ -85,7 +85,7 @@ class WeakWindowHelper(ContextHelper):
 
         if now - self._origTime >= self._ctx.getOptions()["window"]:
             if self._ctx.getOptions()["reset_ctx_on_window_expiration"]:
-                if self._ctx.getOptions()["check_on_window_expiration"]:
+                if "check_on_window_expiration" in self._ctx.getOptions() and self._ctx.getOptions()["check_on_window_expiration"]:
                     self._windowExpirationCache = self._WindowExpirationCache(self._ctx, self._origTime, self._received)
                 self._ctx.destroy()
                 self._restoreContext(self._options, self._initialAttrs)
