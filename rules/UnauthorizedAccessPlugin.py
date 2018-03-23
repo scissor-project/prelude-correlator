@@ -11,7 +11,7 @@ logger = log.getLogger(__name__)
 
 SYSTEM = "ASS_testbed"
 DOOR_OPEN = "Entrance Door Open"
-BADGE_DETECTED = "Badge Detected"
+BADGE_DETECTED = "Badge Recognized"
 FILTERS = (DOOR_OPEN, BADGE_DETECTED)
 
 START = "start"
@@ -71,15 +71,19 @@ class UnauthorizedAccessPlugin(Plugin):
         elif self.get_current_state() == WATCHING:
             self.watch_window(idmef)
 
+    def get_window_end(self, correlator):
+        return time.time() - correlator.getOrigTime() >= correlator.getCtx().getOptions()["window"]
+
     def watch_window(self, idmef):
         correlator = self.getContextHelper(context_id, ExtendedWindowHelper)
 
         if correlator.isEmpty():
             options = {"expire": 40, "threshold": 2, "alert_on_expire": False, \
-            "window": 30, "check_burst": False, BADGE_DETECTED: 0}
+            "window": 30, "check_burst": False, "check_on_window_expiration": True, \
+            "reset_ctx_on_window_expiration": True, BADGE_DETECTED: 0}
             initial_attrs = {\
-            "alert.correlation_alert.name": "Unauthorized Access {}".format(LEVEL), \
-            "alert.classification.text": "Unauthorized Access {}".format(NUMBER), \
+            "alert.correlation_alert.name": "Unauthorized Access", \
+            "alert.classification.text": "Unauthorized Access", \
             "alert.assessment.impact.severity": "info"}
 
             correlator.bindContext(options, initial_attrs)
@@ -87,13 +91,15 @@ class UnauthorizedAccessPlugin(Plugin):
         if idmef is not None and \
         idmef.get("alert.classification.text") == BADGE_DETECTED and \
         correlator.getCtx().getOptions().get(BADGE_DETECTED) == 0:
-            correlator.getCtx().setOption(BADGE_DETECTED, 1)
+            correlator.setOption(BADGE_DETECTED, 1)
+
+        if self.get_window_end(correlator):
+            self.set_current_state(START)
 
         correlator.processIdmef(idmef=idmef, \
         addAlertReference=False, idmefLack=idmef is None)
 
-        if correlator.checkCorrelation():
-            self.set_current_state(START)
+        if correlator.checkCorrelation() and self.is_last_badge_too_old():
             correlator.generateCorrelationAlert(send=True, destroy_ctx=True)
 
     def run(self, idmef):
