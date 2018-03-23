@@ -17,6 +17,8 @@ FILTERS = (DOOR_OPEN, BADGE_DETECTED)
 START = "start"
 WATCHING = "watching"
 
+TOO_OLD = 60
+
 class ExtendedWindowHelper(WeakWindowHelper):
 
     def corrConditions(self):
@@ -50,12 +52,19 @@ class UnauthorizedAccessPlugin(Plugin):
     def rst_last_badge_recognized(self):
         self._last_badge_recognized = None
 
+    def is_last_badge_too_old(self):
+        if self._last_badge_recognized is not None:
+            return time.time() - self.get_last_badge_recognized() > TOO_OLD
+        return True
+
     def check_transitions(self, idmef):
         if idmef is not None and \
         idmef.get("alert.classification.text") == BADGE_DETECTED:
             self.set_last_badge_recognized()
         if self.get_current_state() == START and \
-        idmef is not None and idmef.get("alert.classification.text") == DOOR_OPEN:
+        idmef is not None and \
+        idmef.get("alert.classification.text") == DOOR_OPEN and \
+        self.is_last_badge_too_old():
             self.set_current_state(WATCHING)
             self.watch_window(idmef)
             return
