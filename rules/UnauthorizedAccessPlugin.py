@@ -72,7 +72,7 @@ class UnauthorizedAccessPlugin(Plugin):
             self.watch_window(idmef)
 
     def get_window_end(self, correlator):
-        return time.time() - correlator.getOrigTime() >= correlator.getCtx().getOptions()["window"]
+        return time.time() - correlator._origTime >= correlator.getCtx().getOptions()["window"]
 
     def watch_window(self, idmef):
         correlator = self.getContextHelper(context_id, ExtendedWindowHelper)
@@ -99,7 +99,7 @@ class UnauthorizedAccessPlugin(Plugin):
         correlator.processIdmef(idmef=idmef, \
         addAlertReference=False, idmefLack=idmef is None)
 
-        if correlator.checkCorrelation() and self.is_last_badge_too_old():
+        if correlator.checkCorrelation():
             correlator.generateCorrelationAlert(send=True, destroy_ctx=True)
 
     def run(self, idmef):
@@ -111,7 +111,6 @@ class UnauthorizedAccessPlugin(Plugin):
                 return
 
         self.check_transitions(idmef)
-
 
     def _getDataByMeaning(self, idmef, meaning):
         meanings = idmef.get("alert.additional_data(*).meaning")
