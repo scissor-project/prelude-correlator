@@ -80,18 +80,22 @@ class UnauthorizedAccessPlugin(Plugin):
     def check_transitions(self, idmef):
         if idmef is not None and \
         idmef.get("alert.classification.text") == BADGE_DETECTED:
+            print("badge timestamp UPDATE")
             self.set_last_badge_recognized()
         elif idmef is not None and \
         idmef.get("alert.classification.text") == CABINET_OPEN:
+            print("cabinet timestamp UPDATE")
             self.set_last_cabinet_open()
         if self.get_current_state() == START and \
         idmef is not None and \
         idmef.get("alert.classification.text") == DOOR_OPEN and \
         self.is_last_badge_too_old():
+            print("going to WATCHING")
             self.set_current_state(WATCHING)
             self.watch_window(idmef)
             return
         elif self.get_current_state() == WATCHING:
+            print("already in WATCHING")
             self.watch_window(idmef)
 
     def get_window_end(self, correlator):
@@ -114,13 +118,16 @@ class UnauthorizedAccessPlugin(Plugin):
         if idmef is not None and \
         idmef.get("alert.classification.text") == BADGE_DETECTED and \
         correlator.getCtx().getOptions().get(BADGE_DETECTED) == 0:
+            print("update BADGE_DETECTED")
             correlator.setOption(BADGE_DETECTED, 1)
         elif idmef is not None and \
         idmef.get("alert.classification.text") == CABINET_OPEN and \
         correlator.getCtx().getOptions().get(CABINET_OPEN) == 0:
+            print("update CABINET_OPEN")
             correlator.setOption(CABINET_OPEN, 1)
 
         if self.get_window_end(correlator):
+            print("going to START")
             self.set_current_state(START)
 
         correlator.processIdmef(idmef=idmef, \
@@ -128,8 +135,10 @@ class UnauthorizedAccessPlugin(Plugin):
 
         if correlator.checkCorrelation():
             if not self.is_last_cabinet_open_too_old():
+                print("generating TAMPERING")
                 correlator.getCtx().set("alert.correlation_alert.name", TAMPERING)
                 correlator.getCtx().set("alert.classification.text", TAMPERING)
+            print("CORRELATION ALERT {}".format(correlator.getCtx().get("alert.correlation_alert.name")))
             correlator.generateCorrelationAlert(send=True, destroy_ctx=True)
 
     def run(self, idmef):
@@ -140,6 +149,8 @@ class UnauthorizedAccessPlugin(Plugin):
             idmef.get("alert.classification.text") not in FILTERS:
                 return
 
+        if idmef is not None:
+            print("received : {}".format(idmef.get("alert.classification.text")))
         self.check_transitions(idmef)
 
     def _getDataByMeaning(self, idmef, meaning):

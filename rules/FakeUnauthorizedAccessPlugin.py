@@ -23,6 +23,8 @@ WATCHING = "watching"
 
 TOO_OLD = 60
 
+CABINET_OPEN_TOO_OLD = 60
+
 class ExtendedWindowHelper(WeakWindowHelper):
 
     def corrConditions(self):
@@ -74,24 +76,28 @@ class UnauthorizedAccessPlugin(Plugin):
 
     def is_last_cabinet_open_too_old(self):
         if self._last_cabinet_open is not None:
-            return time.time() - self.get_last_cabinet_open() > TOO_OLD
+            return time.time() - self.get_last_cabinet_open() > CABINET_OPEN_TOO_OLD
         return True
 
     def check_transitions(self, idmef):
         if idmef is not None and \
-        idmef.get("alert.classification.text") == BADGE_DETECTED:
+        self._getDataByMeaning(idmef, "event.text") == BADGE_DETECTED:
+            print("update BADGE_DETECTED timestamp")
             self.set_last_badge_recognized()
         elif idmef is not None and \
-        idmef.get("alert.classification.text") == CABINET_OPEN:
+        self._getDataByMeaning(idmef, "event.text") == CABINET_OPEN:
+            print("update CABINET_OPEN timestamp")
             self.set_last_cabinet_open()
         if self.get_current_state() == START and \
         idmef is not None and \
-        idmef.get("alert.classification.text") == DOOR_OPEN and \
+        self._getDataByMeaning(idmef, "event.text") == DOOR_OPEN and \
         self.is_last_badge_too_old():
+            print("going to WATCHING")
             self.set_current_state(WATCHING)
             self.watch_window(idmef)
             return
         elif self.get_current_state() == WATCHING:
+            print("already in WATCHING")
             self.watch_window(idmef)
 
     def get_window_end(self, correlator):
@@ -112,15 +118,18 @@ class UnauthorizedAccessPlugin(Plugin):
             correlator.bindContext(options, initial_attrs)
 
         if idmef is not None and \
-        idmef.get("alert.classification.text") == BADGE_DETECTED and \
+        self._getDataByMeaning(idmef, "event.text") == BADGE_DETECTED and \
         correlator.getCtx().getOptions().get(BADGE_DETECTED) == 0:
+            print("update BADGE_DETECTED")
             correlator.setOption(BADGE_DETECTED, 1)
         elif idmef is not None and \
-        idmef.get("alert.classification.text") == CABINET_OPEN and \
+        self._getDataByMeaning(idmef, "event.text") == CABINET_OPEN and \
         correlator.getCtx().getOptions().get(CABINET_OPEN) == 0:
+            print("update CABINET_OPEN")
             correlator.setOption(CABINET_OPEN, 1)
 
         if self.get_window_end(correlator):
+            print("going to START")
             self.set_current_state(START)
 
         correlator.processIdmef(idmef=idmef, \
@@ -128,8 +137,10 @@ class UnauthorizedAccessPlugin(Plugin):
 
         if correlator.checkCorrelation():
             if not self.is_last_cabinet_open_too_old():
+                print("generating TAMPERING")
                 correlator.getCtx().set("alert.correlation_alert.name", TAMPERING)
                 correlator.getCtx().set("alert.classification.text", TAMPERING)
+            print("CORRELATION ALERT {}".format(correlator.getCtx().get("alert.correlation_alert.name")))
             correlator.generateCorrelationAlert(send=True, destroy_ctx=True)
 
     def run(self, idmef):
@@ -137,9 +148,11 @@ class UnauthorizedAccessPlugin(Plugin):
         if idmef is not None:
             if idmef.get("alert.correlation_alert.name") is not None or \
             self._getDataByMeaning(idmef, "identity.system") != SYSTEM or \
-            idmef.get("alert.classification.text") not in FILTERS:
+            self._getDataByMeaning(idmef, "event.text") not in FILTERS:
                 return
 
+        if idmef is not None:
+            print(self._getDataByMeaning(idmef, "event.text"))
         self.check_transitions(idmef)
 
     def _getDataByMeaning(self, idmef, meaning):
