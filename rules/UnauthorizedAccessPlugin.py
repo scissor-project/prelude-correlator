@@ -22,6 +22,7 @@ START = "start"
 WATCHING = "watching"
 
 TOO_OLD = 60
+TIMESTAMP_EXPIRATION = 60
 
 class ExtendedWindowHelper(WeakWindowHelper):
 
@@ -39,7 +40,14 @@ class UnauthorizedAccessPlugin(Plugin):
         self._current_state = START
         self._last_badge_recognized = None
         self._last_cabinet_open = None
+        self._start_timestamp = None
         logger.info("Loading %s", self.__class__.__name__)
+
+    def get_start_timestamp(self):
+        return self._start_timestamp
+
+    def set_start_timestamp(self, start_timestamp):
+        self._start_timestamp = start_timestamp
 
     def get_current_state(self):
         return self._current_state
@@ -57,9 +65,12 @@ class UnauthorizedAccessPlugin(Plugin):
     def rst_last_badge_recognized(self):
         self._last_badge_recognized = None
 
-    def is_last_badge_too_old(self):
+    def is_last_badge_too_old(self, idmef=None):
         if self._last_badge_recognized is not None:
-            return time.time() - self.get_last_badge_recognized() > TOO_OLD
+            return time.time() - self.get_last_badge_recognized() > TOO_OLD \
+        if idmef is None else \
+        int(self._getDataByMeaning(idmef, "event.sendtime_ms")) - \
+        self.get_last_badge_recognized() > TOO_OLD
         return True
 
     def get_last_cabinet_open(self):
@@ -72,12 +83,19 @@ class UnauthorizedAccessPlugin(Plugin):
     def rst_last_cabinet_open(self):
         self._last_cabinet_open = None
 
-    def is_last_cabinet_open_too_old(self):
+    def is_last_cabinet_open_too_old(self, idmef=None):
         if self._last_cabinet_open is not None:
-            return time.time() - self.get_last_cabinet_open() > TOO_OLD
+            return time.time() - self.get_last_cabinet_open() > TOO_OLD \
+        if idmef is None else \
+        int(self._getDataByMeaning(idmef, "event.sendtime_ms")) - \
+        self.get_last_cabinet_open() > TOO_OLD
         return True
 
     def check_transitions(self, idmef):
+        if idmef is not None and self._start_timestamp is None:
+            self.set_start_timestamp(\
+            int(self._getDataByMeaning(idmef, "event.sendtime_ms")))
+
         if idmef is not None and \
         idmef.get("alert.classification.text") == BADGE_DETECTED:
             self.set_last_badge_recognized()
@@ -97,12 +115,17 @@ class UnauthorizedAccessPlugin(Plugin):
     def get_window_end(self, correlator):
         return time.time() - correlator._origTime >= correlator.getCtx().getOptions()["window"]
 
+    def timestamp_exceeded(self, idmef):
+        return int(self._getDataByMeaning(idmef, "event.sendtime_ms")) - \
+    self._start_timestamp > TIMESTAMP_EXPIRATION if idmef is not None else \
+    False
+
     def watch_window(self, idmef):
         correlator = self.getContextHelper(context_id, ExtendedWindowHelper)
 
         if correlator.isEmpty():
             options = {"expire": 40, "threshold": 2, "alert_on_expire": False, \
-            "window": 30, "check_burst": False, "check_on_window_expiration": True, \
+            "window": 30, "check_burst": False, "check_on_window_expiration": False, \
             "reset_ctx_on_window_expiration": True, BADGE_DETECTED: 0, CABINET_OPEN: 0}
             initial_attrs = {\
             "alert.correlation_alert.name": "Unauthorized Access", \
@@ -120,12 +143,16 @@ class UnauthorizedAccessPlugin(Plugin):
         correlator.getCtx().getOptions().get(CABINET_OPEN) == 0:
             correlator.setOption(CABINET_OPEN, 1)
 
+        if self.timestamp_exceeded(idmef):
+            self.set_start_timestamp(\
+            int(self._getDataByMeaning(idmef, "event.sendtime_ms")))
+
         if self.get_window_end(correlator):
             self.set_current_state(START)
 
         correlator.processIdmef(idmef=idmef, \
         addAlertReference=False, idmefLack=idmef is None)
-
+        #TODO correlation is not based on timestamps
         if correlator.checkCorrelation():
             if not self.is_last_cabinet_open_too_old():
                 correlator.getCtx().set("alert.correlation_alert.name", TAMPERING)
