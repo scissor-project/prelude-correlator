@@ -1,5 +1,5 @@
 from preludecorrelator.pluginmanager import Plugin
-from preludecorrelator.contexthelpers.WeakWindowHelper import WeakWindowHelper
+from preludecorrelator.contexthelpers.TimestampsWeakWindowHelper import TimestampsWeakWindowHelper
 from preludecorrelator import log
 import time
 
@@ -24,7 +24,7 @@ WATCHING = "watching"
 TOO_OLD = 60
 TIMESTAMP_EXPIRATION = 60
 
-class ExtendedWindowHelper(WeakWindowHelper):
+class ExtendedWindowHelper(TimestampsWeakWindowHelper):
 
     def corrConditions(self):
         badge_detected = self._windowExpirationCache.getCtx().getOptions().get(BADGE_DETECTED)
@@ -65,12 +65,11 @@ class UnauthorizedAccessPlugin(Plugin):
     def rst_last_badge_recognized(self):
         self._last_badge_recognized = None
 
-    def is_last_badge_too_old(self, idmef=None):
+    def is_last_badge_too_old(self):
         if self._last_badge_recognized is not None:
-            return time.time() - self.get_last_badge_recognized() > TOO_OLD \
-        if idmef is None else \
-        int(self._getDataByMeaning(idmef, "event.sendtime_ms")) - \
-        self.get_last_badge_recognized() > TOO_OLD
+            return self.get_last_badge_recognized() - \
+        self._start_timestamp > TOO_OLD*1000 or \
+        self._start_timestamp - self.get_last_badge_recognized() > TOO_OLD*1000
         return True
 
     def get_last_cabinet_open(self):
@@ -83,16 +82,16 @@ class UnauthorizedAccessPlugin(Plugin):
     def rst_last_cabinet_open(self):
         self._last_cabinet_open = None
 
-    def is_last_cabinet_open_too_old(self, idmef=None):
+    def is_last_cabinet_open_too_old(self):
         if self._last_cabinet_open is not None:
-            return time.time() - self.get_last_cabinet_open() > TOO_OLD \
-        if idmef is None else \
-        int(self._getDataByMeaning(idmef, "event.sendtime_ms")) - \
-        self.get_last_cabinet_open() > TOO_OLD
+            return self.get_last_cabinet_open() - \
+        self._start_timestamp > TOO_OLD*1000 or \
+        self._start_timestamp - self.get_last_cabinet_open() > TOO_OLD*1000
         return True
 
     def check_transitions(self, idmef):
-        if idmef is not None and self._start_timestamp is None:
+        if idmef is not None and self._start_timestamp is None and \
+        idmef.get("alert.classification.text") == DOOR_OPEN:
             self.set_start_timestamp(\
             int(self._getDataByMeaning(idmef, "event.sendtime_ms")))
 
@@ -107,20 +106,29 @@ class UnauthorizedAccessPlugin(Plugin):
         idmef.get("alert.classification.text") == DOOR_OPEN and \
         self.is_last_badge_too_old():
             self.set_current_state(WATCHING)
+            self.init_window(idmef)
             self.watch_window(idmef)
             return
         elif self.get_current_state() == WATCHING:
+            if self.timestamp_exceeded(idmef):
+                self.set_start_timestamp(\
+                int(self._getDataByMeaning(idmef, "event.sendtime_ms")))
+                self.set_current_state(START)
+                self.end_window(idmef)
+                self.set_current_state(WATCHING)
+                self.init_window(idmef)
+
             self.watch_window(idmef)
 
     def get_window_end(self, correlator):
-        return time.time() - correlator._origTime >= correlator.getCtx().getOptions()["window"]
+        return correlator.isWindowEnd()
 
     def timestamp_exceeded(self, idmef):
         return int(self._getDataByMeaning(idmef, "event.sendtime_ms")) - \
     self._start_timestamp > TIMESTAMP_EXPIRATION if idmef is not None else \
     False
 
-    def watch_window(self, idmef):
+    def init_window(self, idmef):
         correlator = self.getContextHelper(context_id, ExtendedWindowHelper)
 
         if correlator.isEmpty():
@@ -133,6 +141,10 @@ class UnauthorizedAccessPlugin(Plugin):
             "alert.assessment.impact.severity": "info"}
 
             correlator.bindContext(options, initial_attrs)
+            correlator.setStartSendTimestamp(self._start_timestamp)
+
+    def watch_window(self, idmef):
+        correlator = self.getContextHelper(context_id, ExtendedWindowHelper)
 
         if idmef is not None and \
         idmef.get("alert.classification.text") == BADGE_DETECTED and \
@@ -143,16 +155,20 @@ class UnauthorizedAccessPlugin(Plugin):
         correlator.getCtx().getOptions().get(CABINET_OPEN) == 0:
             correlator.setOption(CABINET_OPEN, 1)
 
-        if self.timestamp_exceeded(idmef):
-            self.set_start_timestamp(\
-            int(self._getDataByMeaning(idmef, "event.sendtime_ms")))
-
         if self.get_window_end(correlator):
             self.set_current_state(START)
 
         correlator.processIdmef(idmef=idmef, \
         addAlertReference=False, idmefLack=idmef is None)
-        #TODO correlation is not based on timestamps
+        if correlator.checkCorrelation():
+            if not self.is_last_cabinet_open_too_old():
+                correlator.getCtx().set("alert.correlation_alert.name", TAMPERING)
+                correlator.getCtx().set("alert.classification.text", TAMPERING)
+            correlator.generateCorrelationAlert(send=True, destroy_ctx=True)
+
+    def end_window(self, idmef):
+        correlator = self.getContextHelper(context_id, ExtendedWindowHelper)
+
         if correlator.checkCorrelation():
             if not self.is_last_cabinet_open_too_old():
                 correlator.getCtx().set("alert.correlation_alert.name", TAMPERING)
