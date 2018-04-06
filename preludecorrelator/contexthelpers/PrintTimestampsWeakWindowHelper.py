@@ -23,8 +23,8 @@ class TimestampsWeakWindowHelper(ContextHelper):
             self._ctx = ctx
             self._origTime = origTime
             self._startSendTimestamp = startSendTimestamp
-            self._received = received
             self._currentSendTimestamp = currentSendTimestamp
+            self._received = received
 
         def getCtx(self):
             return self._ctx
@@ -129,6 +129,11 @@ class TimestampsWeakWindowHelper(ContextHelper):
         return self.isLocalGap() or self.isTimestampGap()
 
     def processIdmef(self, idmef, addAlertReference=True, idmefLack=False):
+        print("These are the state variables\n\
+        current time in millis\n{}, \n\
+        orig time \n{},\ncurrent timestamp {},\
+        \nstart timestamp {}".format(self.getCurrentTimeInMillis(),\
+        self._origTime, self._currentSendTimestamp, self._startSendTimestamp))
         now = time.time()
         if self._ctx.getOptions()["check_burst"]:
             in_window = self._oldestTimestamp is not None and (now - self._oldestTimestamp) < self._ctx.getOptions()["window"]
@@ -138,8 +143,14 @@ class TimestampsWeakWindowHelper(ContextHelper):
                 self._oldestTimestamp = None
 
         if self.isWindowEnd():
+            print("This is window end because\n\
+            current time in millis\n{}, \n\
+            orig time \n{},\ncurrent timestamp {},\
+            \nstart timestamp {}".format(self.getCurrentTimeInMillis(),\
+            self._origTime, self._currentSendTimestamp, self._startSendTimestamp))
             if self._ctx.getOptions()["reset_ctx_on_window_expiration"]:
                 if "check_on_window_expiration" in self._ctx.getOptions() and self._ctx.getOptions()["check_on_window_expiration"]:
+                    print("filling window expiration cache")
                     self._windowExpirationCache = self._WindowExpirationCache(self._ctx, self._origTime, \
                     self._received, self._startSendTimestamp, self._currentSendTimestamp)
                 self._ctx.destroy()
@@ -174,6 +185,11 @@ class TimestampsWeakWindowHelper(ContextHelper):
                 ot_1 = self._windowExpirationCache.getOrigTime()
                 ot_2 = self._windowExpirationCache.getStartSendTimestamp()
                 now_2 = self._windowExpirationCache.getCurrentSendTimestamp()
+            print("Checking Correlation\nThese are the state variables\n\
+            current time in millis\n{}, \n\
+            orig time \n{},\ncurrent timestamp {},\
+            \nstart timestamp {}".format(now_1,\
+            ot_1, now_2, ot_2))
             if now_1 - ot_1 >= self._ctx.getOptions()["window"] or \
             self.isDifferenceBetween(now_2, ot_2):
                 if not self._checkCorrelationWindow():
