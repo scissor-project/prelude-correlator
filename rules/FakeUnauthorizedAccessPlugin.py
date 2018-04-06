@@ -23,8 +23,6 @@ WATCHING = "watching"
 
 TOO_OLD = 60
 
-CABINET_OPEN_TOO_OLD = 60
-
 class ExtendedWindowHelper(WeakWindowHelper):
 
     def corrConditions(self):
@@ -76,17 +74,17 @@ class UnauthorizedAccessPlugin(Plugin):
 
     def is_last_cabinet_open_too_old(self):
         if self._last_cabinet_open is not None:
-            return time.time() - self.get_last_cabinet_open() > CABINET_OPEN_TOO_OLD
+            return time.time() - self.get_last_cabinet_open() > TOO_OLD
         return True
 
     def check_transitions(self, idmef):
         if idmef is not None and \
         self._getDataByMeaning(idmef, "event.text") == BADGE_DETECTED:
-            print("update BADGE_DETECTED timestamp")
+            print("badge timestamp UPDATE")
             self.set_last_badge_recognized()
         elif idmef is not None and \
         self._getDataByMeaning(idmef, "event.text") == CABINET_OPEN:
-            print("update CABINET_OPEN timestamp")
+            print("cabinet timestamp UPDATE")
             self.set_last_cabinet_open()
         if self.get_current_state() == START and \
         idmef is not None and \
@@ -152,7 +150,7 @@ class UnauthorizedAccessPlugin(Plugin):
                 return
 
         if idmef is not None:
-            print(self._getDataByMeaning(idmef, "event.text"))
+            print("received : {}".format(self._getDataByMeaning(idmef, "event.text")))
         self.check_transitions(idmef)
 
     def _getDataByMeaning(self, idmef, meaning):
