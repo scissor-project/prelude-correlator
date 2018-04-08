@@ -37,6 +37,7 @@ class AnomalousAccessPlugin(Plugin):
         self._current_state = START
         self._last_person_entered = None
         self._start_timestamp = None
+        self._consider_idmef_timestamp = time.time()
         logger.info("Loading %s", self.__class__.__name__)
 
     def get_start_timestamp(self):
@@ -241,10 +242,15 @@ class AnomalousAccessPlugin(Plugin):
             if idmef.get("alert.correlation_alert.name") is not None or \
             self._getDataByMeaning(idmef, "identity.system") != SYSTEM or \
             idmef.get("alert.classification.text") not in FILTERS:
-                return
-
-            print("received {}, {}".format(idmef.get("alert.classification.text"),\
-            int(self._getDataByMeaning(idmef, "event.sendtime_ms"))))
+                time_now = time.time()
+                if time_now - self._consider_idmef_timestamp < 1:
+                    return
+                else:
+                    self._consider_idmef_timestamp = time_now
+                    idmef = None
+            else:
+                print("received {}, {}".format(idmef.get("alert.classification.text"),\
+                int(self._getDataByMeaning(idmef, "event.sendtime_ms"))))
         self.check_transitions(idmef)
 
     def _getDataByMeaning(self, idmef, meaning):
