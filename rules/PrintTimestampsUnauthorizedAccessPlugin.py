@@ -41,6 +41,7 @@ class UnauthorizedAccessPlugin(Plugin):
         self._last_badge_recognized = None
         self._last_cabinet_open = None
         self._start_timestamp = None
+        self._consider_idmef_timestamp = time.time()
         logger.info("Loading %s", self.__class__.__name__)
 
     def get_start_timestamp(self):
@@ -90,7 +91,7 @@ class UnauthorizedAccessPlugin(Plugin):
         return True
 
     def check_transitions(self, idmef):
-        print("I am in state {}".format(self.get_current_state()))
+        #print("I am in state {}".format(self.get_current_state()))
         if idmef is not None and self._start_timestamp is None and \
         idmef.get("alert.classification.text") == DOOR_OPEN:
             print("setting timestamp {}".format(int(self._getDataByMeaning(idmef, "event.sendtime_ms"))))
@@ -285,10 +286,15 @@ class UnauthorizedAccessPlugin(Plugin):
             if idmef.get("alert.correlation_alert.name") is not None or \
             self._getDataByMeaning(idmef, "identity.system") != SYSTEM or \
             idmef.get("alert.classification.text") not in FILTERS:
-                return
-
-            print("received {}, {}".format(idmef.get("alert.classification.text"),\
-            int(self._getDataByMeaning(idmef, "event.sendtime_ms"))))
+                time_now = time.time()
+                if time_now - self._consider_idmef_timestamp < 1:
+                    return
+                else:
+                    self._consider_idmef_timestamp = time_now
+                    idmef = None
+            else:
+                print("received {}, {}".format(idmef.get("alert.classification.text"),\
+                int(self._getDataByMeaning(idmef, "event.sendtime_ms"))))
         self.check_transitions(idmef)
 
     def _getDataByMeaning(self, idmef, meaning):
