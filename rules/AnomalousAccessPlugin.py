@@ -1,5 +1,5 @@
 from preludecorrelator.pluginmanager import Plugin
-from preludecorrelator.contexthelpers.WeakWindowHelper import WeakWindowHelper
+from preludecorrelator.contexthelpers.TimestampsWeakWindowHelper import TimestampsWeakWindowHelper
 from preludecorrelator import log
 import time
 
@@ -11,15 +11,17 @@ logger = log.getLogger(__name__)
 
 SYSTEM = "ASS_testbed"
 DOOR_OPEN = "Entrance Door Open"
-PERSON_ENTERED = "1"
-FILTERS = (DOOR_OPEN)
+PERSON_ENTERED = "Person entered a restricted area"
+
+FILTERS = (DOOR_OPEN, PERSON_ENTERED)
 
 START = "start"
 WATCHING = "watching"
 
 TOO_OLD = 60
+TIMESTAMP_EXPIRATION = 30
 
-class ExtendedWindowHelper(WeakWindowHelper):
+class ExtendedWindowHelper(TimestampsWeakWindowHelper):
 
     def corrConditions(self):
         person_entered = self._windowExpirationCache.getCtx().getOptions().get(PERSON_ENTERED)
@@ -34,7 +36,15 @@ class AnomalousAccessPlugin(Plugin):
         self.processIdmefLack = True
         self._current_state = START
         self._last_person_entered = None
+        self._start_timestamp = None
+        self._consider_idmef_timestamp = time.time()
         logger.info("Loading %s", self.__class__.__name__)
+
+    def get_start_timestamp(self):
+        return self._start_timestamp
+
+    def set_start_timestamp(self, start_timestamp):
+        self._start_timestamp = start_timestamp
 
     def get_current_state(self):
         return self._current_state
@@ -54,27 +64,107 @@ class AnomalousAccessPlugin(Plugin):
 
     def is_last_person_entered_too_old(self):
         if self._last_person_entered is not None:
-            return time.time() - self.get_last_person_entered() > TOO_OLD
+            return self.get_last_person_entered() - \
+        self._start_timestamp > TOO_OLD*1000 or \
+        self._start_timestamp - self.get_last_person_entered() > TOO_OLD*1000
         return True
 
     def check_transitions(self, idmef):
+        if idmef is not None and self._start_timestamp is None and \
+        idmef.get("alert.classification.text") == DOOR_OPEN:
+            print("setting timestamp {}".format(int(self._getDataByMeaning(idmef, "event.sendtime_ms"))))
+            self.set_start_timestamp(\
+            int(self._getDataByMeaning(idmef, "event.sendtime_ms")))
+
         if idmef is not None and \
-        self.is_person_entered_id(idmef):
-            self.set_last_person_entered()
-        if self.get_current_state() == START and \
-        idmef is not None and \
-        idmef.get("alert.classification.text") == DOOR_OPEN and \
-        self.is_last_person_entered_too_old():
-            self.set_current_state(WATCHING)
-            self.watch_window(idmef)
+        idmef.get("alert.classification.text") == PERSON_ENTERED:
+            print("setting PERSON_ENTERED {}".format(\
+            int(self._getDataByMeaning(idmef, "event.sendtime_ms"))))
+            self.set_last_person_entered(\
+            int(self._getDataByMeaning(idmef, "event.sendtime_ms")))
+
+        if self.get_current_state() == START:
+            if idmef is not None and idmef.get("alert.classification.text") == DOOR_OPEN:
+                print("I am in START and received DOOR_OPEN, \
+                setting timestamp anyway {}\
+                ".format(int(self._getDataByMeaning(idmef, "event.sendtime_ms"))))
+                self.set_start_timestamp(\
+                int(self._getDataByMeaning(idmef, "event.sendtime_ms")))
+            if idmef is not None and \
+            idmef.get("alert.classification.text") == DOOR_OPEN and \
+            self.is_last_person_entered_too_old():
+                print("going to WATCHING {}".format((
+                int(self._getDataByMeaning(idmef, "event.sendtime_ms")) - \
+                self._start_timestamp)/1000))
+                self.set_current_state(WATCHING)
+                print("init_window")
+                self.init_window(idmef)
+                print("watch_window")
+                self.watch_window(idmef)
+                return
             return
         elif self.get_current_state() == WATCHING:
+            if self.timestamp_exceeded(idmef):
+                print("timestamp exceeded {} - {} = {}".format(\
+                int(self._getDataByMeaning(idmef, "event.sendtime_ms")),
+                self._start_timestamp, (int(self._getDataByMeaning(idmef, "event.sendtime_ms"))- \
+                self._start_timestamp)/1000))
+
+                if idmef.get("alert.classification.text") == DOOR_OPEN:
+                    #This is the case in which i received DOOR_OPEN
+                    #and timestamp is exceeded
+                    self.watch_window(idmef)
+                    print("DOOR_OPEN received, so setting start_timestamp to {}".format(\
+                    int(self._getDataByMeaning(idmef, "event.sendtime_ms"))))
+                    self.set_start_timestamp(\
+                    int(self._getDataByMeaning(idmef, "event.sendtime_ms")))
+                    if self.is_last_person_entered_too_old():
+                        print("last person entered too old, restart window")
+                        print("going to WATCHING")
+                        self.set_current_state(WATCHING)
+                        print("init_window")
+                        self.init_window(idmef)
+                        print("watch_window")
+                        self.watch_window(idmef)
+                        return
+                    #print("going to START from timestamp exceeded")
+                    #self.set_current_state(START)
+                    #print("end_window")
+                    #self.end_window(idmef)
+                    #print("end_window finished, regoing to WATCHING")
+                    #self.set_current_state(WATCHING)
+                    #print("WATCHING set, init_window")
+                    #self.init_window(idmef)
+                else:
+                    #This is the case in which i received event not filtered
+                    #but timestamp is exceeded
+                    self.watch_window(idmef)
+                    print("received {}, so setting start_timestamp to None".\
+                    format(idmef.get("alert.classification.text")))
+                    self.set_start_timestamp(None)
+                    #print("going to START from timestamp exceeded")
+                    #self.set_current_state(START)
+                    #print("end_window")
+                    #self.end_window(idmef)
+                    return
+
+            if idmef is not None and self._start_timestamp is not None:
+                print("timestamp NOT exceeded {} - {} = {}".format(\
+                int(self._getDataByMeaning(idmef, "event.sendtime_ms")),
+                self._start_timestamp, (int(self._getDataByMeaning(idmef, "event.sendtime_ms"))- \
+                self._start_timestamp)/1000))
+            print("so watching window")
             self.watch_window(idmef)
 
     def get_window_end(self, correlator):
-        return time.time() - correlator._origTime >= correlator.getCtx().getOptions()["window"]
+        return correlator.isWindowEnd()
 
-    def watch_window(self, idmef):
+    def timestamp_exceeded(self, idmef):
+        return int(self._getDataByMeaning(idmef, "event.sendtime_ms")) - \
+    self._start_timestamp > TIMESTAMP_EXPIRATION*1000 if idmef is not None else \
+    False
+
+    def init_window(self, idmef):
         correlator = self.getContextHelper(context_id, ExtendedWindowHelper)
 
         if correlator.isEmpty():
@@ -87,44 +177,81 @@ class AnomalousAccessPlugin(Plugin):
             "alert.assessment.impact.severity": "info"}
 
             correlator.bindContext(options, initial_attrs)
+            print("setting correlator start_timestamp {}".format(self._start_timestamp))
+            correlator.setStartSendTimestamp(self._start_timestamp)
+
+            print("setting timestamp to correlator, {} \
+            seconds elapsed".format(\
+            (int(self._getDataByMeaning(idmef, "event.sendtime_ms")) - \
+            self._start_timestamp)/1000))
+            correlator.setCurrentSendTimestamp(\
+            int(self._getDataByMeaning(idmef, "event.sendtime_ms")))
+
+    def watch_window(self, idmef):
+        correlator = self.getContextHelper(context_id, ExtendedWindowHelper)
+
+        if idmef is not None:
+            print("setting timestamp to correlator, {} \
+            seconds elapsed".format(\
+            (int(self._getDataByMeaning(idmef, "event.sendtime_ms")) - \
+            self._start_timestamp)/1000))
+            correlator.setCurrentSendTimestamp(\
+            int(self._getDataByMeaning(idmef, "event.sendtime_ms")))
 
         if idmef is not None and \
-        self.is_person_entered_id(idmef) and \
+        idmef.get("alert.classification.text") == PERSON_ENTERED and \
         correlator.getCtx().getOptions().get(PERSON_ENTERED) == 0:
+            print("update PERSON_ENTERED +1")
             correlator.setOption(PERSON_ENTERED, 1)
 
-        if self.get_window_end(correlator):
-            self.set_current_state(START)
+        window_end = self.get_window_end(correlator)
 
         correlator.processIdmef(idmef=idmef, \
         addAlertReference=False, idmefLack=idmef is None)
+        if correlator.checkCorrelation():
+            print("CORRELATION ALERT, ANOMALOUS ACCESS")
+            print("and going to START, \
+            start_timestamp will be set to None")
+            self.set_current_state(START)
+            self.set_start_timestamp(None)
+            correlator.generateCorrelationAlert(send=True, destroy_ctx=True)
+        else:
+            if window_end:
+                print("correlator says WINDOW END, going to START, \
+                start_timestamp will be set to None")
+                self.set_current_state(START)
+                self.set_start_timestamp(None)
+
+
+    def end_window(self, idmef):
+        correlator = self.getContextHelper(context_id, ExtendedWindowHelper)
+
+        if idmef is not None:
+            print("setting timestamp to correlator, {}".format( \
+            self._getDataByMeaning(idmef, "event.sendtime_ms")))
+            correlator.setCurrentSendTimestamp(\
+            int(self._getDataByMeaning(idmef, "event.sendtime_ms")))
 
         if correlator.checkCorrelation():
+            print("CORRELATION ALERT, ANOMALOUS ACCESS")
             correlator.generateCorrelationAlert(send=True, destroy_ctx=True)
 
     def run(self, idmef):
         #Receive only simple alerts, not correlation alerts
         if idmef is not None:
-            if self.is_correlation_alert(idmef) or \
-            self.is_not_in_system(idmef) or \
-            self.is_invalid_event(idmef):
-                print("EVENT {} FILTERED".format(idmef.get("alert.classification.text")))
-                return
-
+            if idmef.get("alert.correlation_alert.name") is not None or \
+            self._getDataByMeaning(idmef, "identity.system") != SYSTEM or \
+            idmef.get("alert.classification.text") not in FILTERS:
+                time_now = time.time()
+                if time_now - self._consider_idmef_timestamp < 1:
+                    return
+                else:
+                    self._consider_idmef_timestamp = time_now
+                    idmef = None
+            else:
+                print("received {}, {}".format(idmef.get("alert.classification.text"),\
+                int(self._getDataByMeaning(idmef, "event.sendtime_ms"))))
         self.check_transitions(idmef)
-
-    def is_correlation_alert(self, idmef):
-        return idmef.get("alert.correlation_alert.name") is not None
-
-    def is_not_in_system(self, idmef):
-        return self._getDataByMeaning(idmef, "identity.system") != SYSTEM
-
-    def is_invalid_event(self, idmef):
-        return (idmef.get("alert.classification.text") not in FILTERS) and not self.is_person_entered_id(idmef)
-
-    def is_person_entered_id(self, idmef):
-        ev_id = self._getDataByMeaning(idmef, "event.id")
-        return (ev_id is not None) and ev_id == PERSON_ENTERED
 
     def _getDataByMeaning(self, idmef, meaning):
         meanings = idmef.get("alert.additional_data(*).meaning")

@@ -41,102 +41,8 @@ class UnauthorizedAccessPlugin(Plugin):
         self._last_badge_recognized = None
         self._last_cabinet_open = None
         self._start_timestamp = None
+        self._consider_idmef_timestamp = time.time()
         logger.info("Loading %s", self.__class__.__name__)
-
-    class _Start(object):
-
-        def __init__(self, context):
-            self.context = context
-
-        def getName(self):
-            return "start"
-
-        def getNextState(self):
-            return "watching"
-
-        def execState(self, idmef):
-            if idmef is not None and \
-            idmef.get("alert.classification.text") == DOOR_OPEN and \
-            self.context.is_last_badge_too_old():
-                return True
-            return False
-
-    class _Watching(object):
-
-        def __init__(self, context):
-            self.context = context
-            self.generate_correlation_alert = False
-
-        def getName(self):
-            return "watching"
-
-        def getNextState(self):
-            return "start"
-
-        def execState(self, idmef):
-            correlator = self.context.getContextHelper(context_id, ExtendedWindowHelper)
-
-            if idmef is not None:
-                correlator.setCurrentSendTimestamp(\
-                int(self.context._getDataByMeaning(idmef, "event.sendtime_ms")))
-
-            return self.watchWindow(idmef, correlator)
-
-
-        def watchWindow(self, idmef, correlator):
-            if idmef is not None:
-                correlator.setCurrentSendTimestamp(\
-                int(self.context._getDataByMeaning(idmef, "event.sendtime_ms")))
-
-            if idmef is not None and \
-            idmef.get("alert.classification.text") == BADGE_DETECTED and \
-            correlator.getCtx().getOptions().get(BADGE_DETECTED) == 0:
-                correlator.setOption(BADGE_DETECTED, 1)
-            elif idmef is not None and \
-            idmef.get("alert.classification.text") == CABINET_OPEN and \
-            correlator.getCtx().getOptions().get(CABINET_OPEN) == 0:
-                correlator.setOption(CABINET_OPEN, 1)
-
-            window_end = self.context.get_window_end(correlator)
-
-            correlator.processIdmef(idmef=idmef, \
-            addAlertReference=False, idmefLack=idmef is None)
-            if correlator.checkCorrelation():
-                if not self.context.is_last_cabinet_open_too_old():
-                    correlator.getCtx().set("alert.correlation_alert.name", TAMPERING)
-                    correlator.getCtx().set("alert.classification.text", TAMPERING)
-                self.generate_correlation_alert = True
-                return True
-            else:
-                if window_end:
-                    return True
-
-    def generate_correlation_alert(self):
-        correlator = self.getContextHelper(context_id, ExtendedWindowHelper)
-        correlator.generateCorrelationAlert(send=True, destroy_ctx=True)
-
-    def from_start_to_watching(self, idmef):
-        self.set_current_state(self._Watching(self))
-        self.init_window(idmef)
-
-    def from_watching_to_start(self, idmef):
-        to_gen = self.get_current_state().generate_correlation_alert
-
-        self.set_current_state(self._Start(self))
-        if idmef.get("alert.classification.text") == DOOR_OPEN:
-            time_exceeded = self.timestamp_exceeded(idmef)
-            #This is the case in which i received DOOR_OPEN
-            #and timestamp is exceeded
-            self.set_start_timestamp(\
-            int(self._getDataByMeaning(idmef, "event.sendtime_ms")))
-            if to_gen:
-                self.generate_correlation_alert()
-            if time_exceeded:
-                self.check_state_transitions(idmef)
-        else:
-            self.set_start_timestamp(None)
-            if to_gen:
-                self.generate_correlation_alert()
 
     def get_start_timestamp(self):
         return self._start_timestamp
@@ -184,77 +90,98 @@ class UnauthorizedAccessPlugin(Plugin):
         self._start_timestamp - self.get_last_cabinet_open() > TOO_OLD*1000
         return True
 
-    def process_idmef(self, idmef):
-        if idmef is not None and self._start_timestamp is None and \
-        idmef.get("alert.classification.text") == DOOR_OPEN:
-            self.set_start_timestamp(\
-            int(self._getDataByMeaning(idmef, "event.sendtime_ms")))
-
-        if idmef is not None and \
-        idmef.get("alert.classification.text") == BADGE_DETECTED:
-            self.set_last_badge_recognized()
-        elif idmef is not None and \
-        idmef.get("alert.classification.text") == CABINET_OPEN:
-            self.set_last_cabinet_open()
-
-    def check_state_transitions(self, idmef):
-        current_state = self.get_current_state()
-        if current_state.execState(idmef):
-            metname = "from_{}_to_{}".format(current_state.getName(), \
-            current_state.getNextState())
-            getattr(self, metname)(idmef)
-
     def check_transitions(self, idmef):
+        #print("I am in state {}".format(self.get_current_state()))
         if idmef is not None and self._start_timestamp is None and \
         idmef.get("alert.classification.text") == DOOR_OPEN:
+            print("setting timestamp {}".format(int(self._getDataByMeaning(idmef, "event.sendtime_ms"))))
             self.set_start_timestamp(\
             int(self._getDataByMeaning(idmef, "event.sendtime_ms")))
 
         if idmef is not None and \
         idmef.get("alert.classification.text") == BADGE_DETECTED:
-            self.set_last_badge_recognized()
+            print("setting BADGE_DETECTED {}".format(\
+            int(self._getDataByMeaning(idmef, "event.sendtime_ms"))))
+            self.set_last_badge_recognized(\
+            int(self._getDataByMeaning(idmef, "event.sendtime_ms")))
         elif idmef is not None and \
         idmef.get("alert.classification.text") == CABINET_OPEN:
-            self.set_last_cabinet_open()
+            print("setting CABINET_OPEN {}".format(\
+            int(self._getDataByMeaning(idmef, "event.sendtime_ms"))))
+            self.set_last_cabinet_open(\
+            int(self._getDataByMeaning(idmef, "event.sendtime_ms")))
+
         if self.get_current_state() == START:
             if idmef is not None and idmef.get("alert.classification.text") == DOOR_OPEN:
+                print("I am in START and received DOOR_OPEN, \
+                setting timestamp anyway {}\
+                ".format(int(self._getDataByMeaning(idmef, "event.sendtime_ms"))))
                 self.set_start_timestamp(\
                 int(self._getDataByMeaning(idmef, "event.sendtime_ms")))
             if idmef is not None and \
             idmef.get("alert.classification.text") == DOOR_OPEN and \
             self.is_last_badge_too_old():
+                print("going to WATCHING {}".format((
+                int(self._getDataByMeaning(idmef, "event.sendtime_ms")) - \
+                self._start_timestamp)/1000))
                 self.set_current_state(WATCHING)
+                print("init_window")
                 self.init_window(idmef)
+                print("watch_window")
                 self.watch_window(idmef)
                 return
             return
         elif self.get_current_state() == WATCHING:
             if self.timestamp_exceeded(idmef):
+                print("timestamp exceeded {} - {} = {}".format(\
+                int(self._getDataByMeaning(idmef, "event.sendtime_ms")),
+                self._start_timestamp, (int(self._getDataByMeaning(idmef, "event.sendtime_ms"))- \
+                self._start_timestamp)/1000))
+
                 if idmef.get("alert.classification.text") == DOOR_OPEN:
                     #This is the case in which i received DOOR_OPEN
                     #and timestamp is exceeded
                     self.watch_window(idmef)
+                    print("DOOR_OPEN received, so setting start_timestamp to {}".format(\
+                    int(self._getDataByMeaning(idmef, "event.sendtime_ms"))))
                     self.set_start_timestamp(\
                     int(self._getDataByMeaning(idmef, "event.sendtime_ms")))
                     if self.is_last_badge_too_old():
+                        print("last badge too old, restart window")
+                        print("going to WATCHING")
                         self.set_current_state(WATCHING)
+                        print("init_window")
                         self.init_window(idmef)
+                        print("watch_window")
                         self.watch_window(idmef)
                         return
-                    return
+                    #print("going to START from timestamp exceeded")
                     #self.set_current_state(START)
+                    #print("end_window")
                     #self.end_window(idmef)
+                    #print("end_window finished, regoing to WATCHING")
                     #self.set_current_state(WATCHING)
+                    #print("WATCHING set, init_window")
                     #self.init_window(idmef)
                 else:
                     #This is the case in which i received event not filtered
                     #but timestamp is exceeded
                     self.watch_window(idmef)
+                    print("received {}, so setting start_timestamp to None".\
+                    format(idmef.get("alert.classification.text")))
                     self.set_start_timestamp(None)
+                    #print("going to START from timestamp exceeded")
                     #self.set_current_state(START)
+                    #print("end_window")
                     #self.end_window(idmef)
                     return
 
+            if idmef is not None and self._start_timestamp is not None:
+                print("timestamp NOT exceeded {} - {} = {}".format(\
+                int(self._getDataByMeaning(idmef, "event.sendtime_ms")),
+                self._start_timestamp, (int(self._getDataByMeaning(idmef, "event.sendtime_ms"))- \
+                self._start_timestamp)/1000))
+            print("so watching window")
             self.watch_window(idmef)
 
     def get_window_end(self, correlator):
@@ -278,22 +205,36 @@ class UnauthorizedAccessPlugin(Plugin):
             "alert.assessment.impact.severity": "info"}
 
             correlator.bindContext(options, initial_attrs)
+            print("setting correlator start_timestamp {}".format(self._start_timestamp))
             correlator.setStartSendTimestamp(self._start_timestamp)
-            correlator.setCurrentSendTimestamp(self._start_timestamp)
+
+            print("setting timestamp to correlator, {} \
+            seconds elapsed".format(\
+            (int(self._getDataByMeaning(idmef, "event.sendtime_ms")) - \
+            self._start_timestamp)/1000))
+            correlator.setCurrentSendTimestamp(\
+            int(self._getDataByMeaning(idmef, "event.sendtime_ms")))
 
     def watch_window(self, idmef):
         correlator = self.getContextHelper(context_id, ExtendedWindowHelper)
+
         if idmef is not None:
+            print("setting timestamp to correlator, {} \
+            seconds elapsed".format(\
+            (int(self._getDataByMeaning(idmef, "event.sendtime_ms")) - \
+            self._start_timestamp)/1000))
             correlator.setCurrentSendTimestamp(\
             int(self._getDataByMeaning(idmef, "event.sendtime_ms")))
 
         if idmef is not None and \
         idmef.get("alert.classification.text") == BADGE_DETECTED and \
         correlator.getCtx().getOptions().get(BADGE_DETECTED) == 0:
+            print("update BADGE_DETECTED +1")
             correlator.setOption(BADGE_DETECTED, 1)
         elif idmef is not None and \
         idmef.get("alert.classification.text") == CABINET_OPEN and \
         correlator.getCtx().getOptions().get(CABINET_OPEN) == 0:
+            print("update CABINET_OPEN +1")
             correlator.setOption(CABINET_OPEN, 1)
 
         window_end = self.get_window_end(correlator)
@@ -301,14 +242,22 @@ class UnauthorizedAccessPlugin(Plugin):
         correlator.processIdmef(idmef=idmef, \
         addAlertReference=False, idmefLack=idmef is None)
         if correlator.checkCorrelation():
+            print("CORRELATION ALERT")
             if not self.is_last_cabinet_open_too_old():
+                print("TAMPERING")
                 correlator.getCtx().set("alert.correlation_alert.name", TAMPERING)
                 correlator.getCtx().set("alert.classification.text", TAMPERING)
+            else:
+                print("WITHOUT TAMPERING")
+            print("and going to START, \
+            start_timestamp will be set to None")
             self.set_current_state(START)
             self.set_start_timestamp(None)
             correlator.generateCorrelationAlert(send=True, destroy_ctx=True)
         else:
             if window_end:
+                print("correlator says WINDOW END, going to START, \
+                start_timestamp will be set to None")
                 self.set_current_state(START)
                 self.set_start_timestamp(None)
 
@@ -317,13 +266,18 @@ class UnauthorizedAccessPlugin(Plugin):
         correlator = self.getContextHelper(context_id, ExtendedWindowHelper)
 
         if idmef is not None:
+            print("setting timestamp to correlator, {}".format( \
+            self._getDataByMeaning(idmef, "event.sendtime_ms")))
             correlator.setCurrentSendTimestamp(\
             int(self._getDataByMeaning(idmef, "event.sendtime_ms")))
 
         if correlator.checkCorrelation():
+            print("CORRELATION ALERT")
             if not self.is_last_cabinet_open_too_old():
+                print("TAMPERING")
                 correlator.getCtx().set("alert.correlation_alert.name", TAMPERING)
                 correlator.getCtx().set("alert.classification.text", TAMPERING)
+            print("WITHOUT TAMPERING")
             correlator.generateCorrelationAlert(send=True, destroy_ctx=True)
 
     def run(self, idmef):
@@ -332,8 +286,15 @@ class UnauthorizedAccessPlugin(Plugin):
             if idmef.get("alert.correlation_alert.name") is not None or \
             self._getDataByMeaning(idmef, "identity.system") != SYSTEM or \
             idmef.get("alert.classification.text") not in FILTERS:
-                return
-
+                time_now = time.time()
+                if time_now - self._consider_idmef_timestamp < 1:
+                    return
+                else:
+                    self._consider_idmef_timestamp = time_now
+                    idmef = None
+            else:
+                print("received {}, {}".format(idmef.get("alert.classification.text"),\
+                int(self._getDataByMeaning(idmef, "event.sendtime_ms"))))
         self.check_transitions(idmef)
 
     def _getDataByMeaning(self, idmef, meaning):
