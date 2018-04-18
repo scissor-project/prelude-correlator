@@ -207,7 +207,7 @@ class AnomalousAccessPlugin(Plugin):
         window_end = self.get_window_end(correlator)
 
         correlator.processIdmef(idmef=idmef, \
-        addAlertReference=False, idmefLack=idmef is None)
+        addAlertReference=True, idmefLack=idmef is None)
         if correlator.checkCorrelation():
             print("CORRELATION ALERT, ANOMALOUS ACCESS")
             print("and going to START, \

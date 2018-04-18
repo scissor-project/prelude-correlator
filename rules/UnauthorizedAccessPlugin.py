@@ -240,11 +240,15 @@ class UnauthorizedAccessPlugin(Plugin):
         window_end = self.get_window_end(correlator)
 
         correlator.processIdmef(idmef=idmef, \
-        addAlertReference=False, idmefLack=idmef is None)
+        addAlertReference=True, idmefLack=idmef is None)
         if correlator.checkCorrelation():
             print("CORRELATION ALERT")
             if not self.is_last_cabinet_open_too_old():
                 print("TAMPERING")
+                if correlator._windowExpirationCache is not None and \
+                correlator._windowExpirationCache.getCtx() is not None:
+                    correlator._windowExpirationCache.getCtx().set("alert.correlation_alert.name", TAMPERING)
+                    correlator._windowExpirationCache.getCtx().set("alert.classification.text", TAMPERING)
                 correlator.getCtx().set("alert.correlation_alert.name", TAMPERING)
                 correlator.getCtx().set("alert.classification.text", TAMPERING)
             else:
