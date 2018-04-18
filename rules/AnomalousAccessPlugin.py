@@ -174,7 +174,7 @@ class AnomalousAccessPlugin(Plugin):
             initial_attrs = {\
             "alert.correlation_alert.name": "Anomalous Access", \
             "alert.classification.text": "Anomalous Access", \
-            "alert.assessment.impact.severity": "info"}
+            "alert.assessment.impact.severity": "medium"}
 
             correlator.bindContext(options, initial_attrs)
             print("setting correlator start_timestamp {}".format(self._start_timestamp))
