@@ -202,7 +202,7 @@ class UnauthorizedAccessPlugin(Plugin):
             initial_attrs = {\
             "alert.correlation_alert.name": "Unauthorized Access", \
             "alert.classification.text": "Unauthorized Access", \
-            "alert.assessment.impact.severity": "info"}
+            "alert.assessment.impact.severity": "high"}
 
             correlator.bindContext(options, initial_attrs)
             print("setting correlator start_timestamp {}".format(self._start_timestamp))
