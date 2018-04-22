@@ -127,14 +127,6 @@ class AnomalousAccessPlugin(Plugin):
                         print("watch_window")
                         self.watch_window(idmef)
                         return
-                    #print("going to START from timestamp exceeded")
-                    #self.set_current_state(START)
-                    #print("end_window")
-                    #self.end_window(idmef)
-                    #print("end_window finished, regoing to WATCHING")
-                    #self.set_current_state(WATCHING)
-                    #print("WATCHING set, init_window")
-                    #self.init_window(idmef)
                 else:
                     #This is the case in which i received event not filtered
                     #but timestamp is exceeded
@@ -142,10 +134,6 @@ class AnomalousAccessPlugin(Plugin):
                     print("received {}, so setting start_timestamp to None".\
                     format(idmef.get("alert.classification.text")))
                     self.set_start_timestamp(None)
-                    #print("going to START from timestamp exceeded")
-                    #self.set_current_state(START)
-                    #print("end_window")
-                    #self.end_window(idmef)
                     return
 
             if idmef is not None and self._start_timestamp is not None:
