@@ -73,20 +73,20 @@ class UnauthorizedDevicePlugin(Plugin):
     def check_transitions(self, idmef):
         if idmef is not None and self._start_timestamp is None and \
         idmef.get("alert.classification.text") == NEW_DEVICE:
-            print("setting timestamp {}".format(int(self._getDataByMeaning(idmef, "event.sendtime_ms"))))
+            logger.info("setting timestamp {}".format(int(self._getDataByMeaning(idmef, "event.sendtime_ms"))))
             self.set_start_timestamp(\
             int(self._getDataByMeaning(idmef, "event.sendtime_ms")))
 
         if idmef is not None and \
         idmef.get("alert.classification.text") == BADGE_RECOGNIZED:
-            print("setting BADGE_RECOGNIZED {}".format(\
+            logger.info("setting BADGE_RECOGNIZED {}".format(\
             int(self._getDataByMeaning(idmef, "event.sendtime_ms"))))
             self.set_last_badge_recognized(\
             int(self._getDataByMeaning(idmef, "event.sendtime_ms")))
 
         if self.get_current_state() == START:
             if idmef is not None and idmef.get("alert.classification.text") == NEW_DEVICE:
-                print("I am in START and received NEW_DEVICE, \
+                logger.info("I am in START and received NEW_DEVICE, \
                 setting timestamp anyway {}\
                 ".format(int(self._getDataByMeaning(idmef, "event.sendtime_ms"))))
                 self.set_start_timestamp(\
@@ -94,19 +94,19 @@ class UnauthorizedDevicePlugin(Plugin):
             if idmef is not None and \
             idmef.get("alert.classification.text") == NEW_DEVICE and \
             self.is_last_badge_recognized_too_old():
-                print("going to WATCHING {}".format((
+                logger.info("going to WATCHING {}".format((
                 int(self._getDataByMeaning(idmef, "event.sendtime_ms")) - \
                 self._start_timestamp)/1000))
                 self.set_current_state(WATCHING)
-                print("init_window")
+                logger.info("init_window")
                 self.init_window(idmef)
-                print("watch_window")
+                logger.info("watch_window")
                 self.watch_window(idmef)
                 return
             return
         elif self.get_current_state() == WATCHING:
             if self.timestamp_exceeded(idmef):
-                print("timestamp exceeded {} - {} = {}".format(\
+                logger.info("timestamp exceeded {} - {} = {}".format(\
                 int(self._getDataByMeaning(idmef, "event.sendtime_ms")),
                 self._start_timestamp, (int(self._getDataByMeaning(idmef, "event.sendtime_ms"))- \
                 self._start_timestamp)/1000))
@@ -115,34 +115,34 @@ class UnauthorizedDevicePlugin(Plugin):
                     #This is the case in which i received NEW_DEVICE
                     #and timestamp is exceeded
                     self.watch_window(idmef)
-                    print("NEW_DEVICE received, so setting start_timestamp to {}".format(\
+                    logger.info("NEW_DEVICE received, so setting start_timestamp to {}".format(\
                     int(self._getDataByMeaning(idmef, "event.sendtime_ms"))))
                     self.set_start_timestamp(\
                     int(self._getDataByMeaning(idmef, "event.sendtime_ms")))
                     if self.is_last_badge_recognized_too_old():
-                        print("last badge recognized entered too old, restart window")
-                        print("going to WATCHING")
+                        logger.info("last badge recognized entered too old, restart window")
+                        logger.info("going to WATCHING")
                         self.set_current_state(WATCHING)
-                        print("init_window")
+                        logger.info("init_window")
                         self.init_window(idmef)
-                        print("watch_window")
+                        logger.info("watch_window")
                         self.watch_window(idmef)
                         return
                 else:
                     #This is the case in which i received event not filtered
                     #but timestamp is exceeded
                     self.watch_window(idmef)
-                    print("received {}, so setting start_timestamp to None".\
+                    logger.info("received {}, so setting start_timestamp to None".\
                     format(idmef.get("alert.classification.text")))
                     self.set_start_timestamp(None)
                     return
 
             if idmef is not None and self._start_timestamp is not None:
-                print("timestamp NOT exceeded {} - {} = {}".format(\
+                logger.info("timestamp NOT exceeded {} - {} = {}".format(\
                 int(self._getDataByMeaning(idmef, "event.sendtime_ms")),
                 self._start_timestamp, (int(self._getDataByMeaning(idmef, "event.sendtime_ms"))- \
                 self._start_timestamp)/1000))
-            print("so watching window")
+            logger.info("watching window")
             self.watch_window(idmef)
 
     def get_window_end(self, correlator):
@@ -161,15 +161,15 @@ class UnauthorizedDevicePlugin(Plugin):
             "window": 30, "check_burst": False, "check_on_window_expiration": True, \
             "reset_ctx_on_window_expiration": True, BADGE_RECOGNIZED: 0}
             initial_attrs = {\
-            "alert.correlation_alert.name": "Anomalous Access", \
-            "alert.classification.text": "Anomalous Access", \
-            "alert.assessment.impact.severity": "medium"}
+            "alert.correlation_alert.name": "Unauthorized Device", \
+            "alert.classification.text": "Unauthorized Device", \
+            "alert.assessment.impact.severity": "high"}
 
             correlator.bindContext(options, initial_attrs)
-            print("setting correlator start_timestamp {}".format(self._start_timestamp))
+            logger.info("setting correlator start_timestamp {}".format(self._start_timestamp))
             correlator.setStartSendTimestamp(self._start_timestamp)
 
-            print("setting timestamp to correlator, {} \
+            logger.info("setting timestamp to correlator, {} \
             seconds elapsed".format(\
             (int(self._getDataByMeaning(idmef, "event.sendtime_ms")) - \
             self._start_timestamp)/1000))
@@ -180,7 +180,7 @@ class UnauthorizedDevicePlugin(Plugin):
         correlator = self.getContextHelper(context_id, ExtendedWindowHelper)
 
         if idmef is not None:
-            print("setting timestamp to correlator, {} \
+            logger.info("setting timestamp to correlator, {} \
             seconds elapsed".format(\
             (int(self._getDataByMeaning(idmef, "event.sendtime_ms")) - \
             self._start_timestamp)/1000))
@@ -190,7 +190,7 @@ class UnauthorizedDevicePlugin(Plugin):
         if idmef is not None and \
         idmef.get("alert.classification.text") == BADGE_RECOGNIZED and \
         correlator.getCtx().getOptions().get(BADGE_RECOGNIZED) == 0:
-            print("update BADGE_RECOGNIZED +1")
+            logger.info("update BADGE_RECOGNIZED +1")
             correlator.setOption(BADGE_RECOGNIZED, 1)
 
         window_end = self.get_window_end(correlator)
@@ -198,15 +198,15 @@ class UnauthorizedDevicePlugin(Plugin):
         correlator.processIdmef(idmef=idmef, \
         addAlertReference=True, idmefLack=idmef is None)
         if correlator.checkCorrelation():
-            print("CORRELATION ALERT, ANOMALOUS ACCESS")
-            print("and going to START, \
+            logger.info("CORRELATION ALERT, UNAUTHORIZED DEVICE")
+            logger.info("and going to START, \
             start_timestamp will be set to None")
             self.set_current_state(START)
             self.set_start_timestamp(None)
             correlator.generateCorrelationAlert(send=True, destroy_ctx=True)
         else:
             if window_end:
-                print("correlator says WINDOW END, going to START, \
+                logger.info("correlator says WINDOW END, going to START, \
                 start_timestamp will be set to None")
                 self.set_current_state(START)
                 self.set_start_timestamp(None)
@@ -216,13 +216,13 @@ class UnauthorizedDevicePlugin(Plugin):
         correlator = self.getContextHelper(context_id, ExtendedWindowHelper)
 
         if idmef is not None:
-            print("setting timestamp to correlator, {}".format( \
+            logger.info("setting timestamp to correlator, {}".format( \
             self._getDataByMeaning(idmef, "event.sendtime_ms")))
             correlator.setCurrentSendTimestamp(\
             int(self._getDataByMeaning(idmef, "event.sendtime_ms")))
 
         if correlator.checkCorrelation():
-            print("CORRELATION ALERT, ANOMALOUS ACCESS")
+            logger.info("CORRELATION ALERT, UNAUTHORIZED DEVICE")
             correlator.generateCorrelationAlert(send=True, destroy_ctx=True)
 
     def run(self, idmef):
@@ -238,7 +238,7 @@ class UnauthorizedDevicePlugin(Plugin):
                     self._consider_idmef_timestamp = time_now
                     idmef = None
             else:
-                print("received {}, {}".format(idmef.get("alert.classification.text"),\
+                logger.info("received {}, {}".format(idmef.get("alert.classification.text"),\
                 int(self._getDataByMeaning(idmef, "event.sendtime_ms"))))
         self.check_transitions(idmef)
 
